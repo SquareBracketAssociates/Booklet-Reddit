@@ -1,42 +1,51 @@
-
-!! Reddit in 10 little classes
-(A more recent and up to date version of this nice tutorial is available at: ==https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740==)
+!! Reddit.st -- in 10 Cool Pharo Classes
 
 
-CRUD refers to the Create, read, update and delete operations in persistent storage. The term CRUD applications often refers to simple applications managing simple data and that have to be created fast. Often CRUD development is done with languages such as PHP. In this Chapter we want to show that Smalltalk is a really good alternative and that in addition, your CRUD applications can evolve (which is often the problems of the use of traditional languages). We will show you that it  is perfectly possible to write nice web applications in Pharo and really fast and Reddit.st adds persistency in a relational database, unit tests as well as web application components to the mix.
+CRUD refers to the Create, Read, Update and Delete operations in persistent storage. The term CRUD applications often refers to simple applications managing simple data and that have to be created fast. Often CRUD development is done with languages such as PHP. In this booklet we want to show that Pharo is a really good alternative and that in addition, your CRUD applications can evolve (which is often the problems of the use of traditional languages). We will show you that it  is perfectly possible to write nice web applications in Pharo and really fast and Reddit.st adds persistency in a relational database, unit tests as well as web application components to the mix.
 
-We will show how to implement a small but non-trivial web application in Smalltalk using Seaside, Glorp and PostgreSQL. Reddit, is web application where users can post interesting links that get voted up or down. The idea is that the 'best' links end up with the most points automatically. Many other websites exist in the area of social bookmarking, like Delicious, Digg and Hacker News.
-
-
-
-The 10 main sections of this chapter follow the development of the 10 classes making up the application. The focus of the Smalltalk version is not so much on the small size or the high developer productivity, but more on the fact that we can cover so much ground using such powerful frameworks, as well as the natural development flow from model over tests and persistence to web GUI.
-
-The material shown in this Chapter was originally written by Sven Van Caekenberghe and we thanks him for his permission to use it to create this book chapter.  We assume that you understand what web applications are and how Seaside basically works. If not, you should read the Seaside Chapter for an introduction. We also will assume that you have a basic understanding of relational databases and/or SQL.
+Technically speaking, this  tutorial will show how to implement a small but non-trivial web application in Pharo *http://www.pharo.org* using Seaside *http://seaside.st*, Glorp *http://glorp.org* (an ORM) and PostgreSQL *http://www.postgresql.org*.
 
 
-!!!First: a Model
+Reddit *http://www.reddit.com* is web application where users can post interesting links that get voted up or down. The idea is that the 'best' links end up with the most points automatically. Many other websites exist in the area of social bookmarking, like Delicious, Digg and Hacker News.
 
-The central object of our application will be ==RedditLink==, an interesting URL with a title, a created timestamp and a number of points. It has the following properties: ==id url title created points==.
+This tutorial is based on the web version available at: *https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740*,
 
-These are naturally instance variables of our class. Create a new class inheriting from ==Object== subclass by editing the class template.
+
+
+Reddit.st adds ""persistency"" in a relational database, ""unit tests"" as well as web application ""components"" to the mix.
+
+The 10 main sections of this booklet follow the development of the 10 classes making up the application. The focus of the Pharo version is not so much on the small size or the high developer productivity, but more on the fact that we can cover so much ground using such powerful frameworks, as well as the natural development flow from model over tests and persistence to web GUI.
+
+The appendix explains how to get the source code discussed in this article.
+
+
+The material shown in this booklet was originally written by Sven Van Caekenberghe and we thanks him for his permission to use it to create this booklet.  We assume that you understand what web applications are and how Seaside basically works. If not, you should read the Seaside Chapter available in Pharo by Example or the introduction in Dynamic Web Development with Seaside available *http://books.pharo.org* for an introduction. We also will assume that you have a basic understanding of relational databases and/or SQL.
+
+
+!! First RedditLink: a Model
+
+The central object of our application is ==RedditLink==, representing an interesting URL with a title, a created timestamp and a number of points. It has the following properties: ==id url title created points==.
+
+These are naturally instance variables of our class. Create a new ==Object== subclass by editing the class template.
 
 [[[
 Object subclass: #RedditLink 
    instanceVariableNames: 'id url title created points' 
    classVariableNames: '' 
-   poolDictionaries: '' 
-   category: 'Reddit'
+   package: 'Reddit'
 ]]]
 
 Next,  use the class refactoring tool to automatically generate accessors (getters and setters) for all our instance variables. With these implemented we can write our ==initialize== and ==printOn:== methods.
 
 [[[
 RedditLink >> initialize
-    self initialize.
-    self points: 0.
-    self created: TimeStamp now
+	self 
+		points: 0;
+		created: DateAndTime now
+]]]
 
-RedditLink >> printOn:
+[[[
+RedditLink >> printOn: stream
     super printOn: stream. 
     stream nextPut: $(. 
     self url printOn: stream. 
@@ -51,6 +60,41 @@ We also add a method named ==posted==  that will return the ==Duration== of time
 RedditLink >> posted
     ^ TimeStamp now - self created
 ]]]
+
+To make it a little bit easier for others to create new instances of us, we add a class method called withUrl:title:.
+
+[[[
+RedditLink class >> withUrl: url title: title
+  ^ self new 
+      url: url;
+      title: title;
+      yourself
+]]]
+
+
+To make the manipulation of objects easier we also add an example method. Pressing the green arrow will open an inspector on the object.
+
+[[[
+RedditLink class >> pharoDotOrg
+	<sampleInstance>
+	^ self withUrl: 'http://pharo.org' title: 'pharo'
+]]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Apart from creating and displaying RedditLinks, users should be able to vote them up and down. Therefore, we add two action methods, ==voteUp== and ==voteDown==.
 
@@ -73,7 +117,7 @@ RedditLink class >> withUrl: url title: title
 The core of the RedditLink object is now finished. Everything is ready to make instances and use them.
 
 
-!!!RedditLinkTests
+!!RedditLinkTests
 
 Units tests are very important, not so much in small examples like this one, but especially in larger applications. Having a good set of unit tests with descent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in some workspace, you can just as well write a unit test. We created the class ==RedditLinkTests== as a subclass of ==TestCase== and add 3 test methods.
 
@@ -659,3 +703,17 @@ Each time the CAPTCHA is rendered, ==x== and ==y== get a new random value betwee
 The source code discussed in this chapter is available the SqueakSource project called ADayAtTheBeach. Look for the package called Reddit.
 
 Measuring the quality of the design is often a challenge. We believe that having classes with clear responsibilities. This is what we applied when designing such little application. Reddit.st consists of 10 classes for a total of 8 class methods and 75 instance methods. More than half are just one (1) line long, the rest averages just a few lines.
+
+!!! Appendix
+The source code discussed in this article is available from SmalltalkHub in a project called Reddit. It was written for Pharo 3.0. You should load the code using its Metacello configuration, because Seaside and Glorp have to be loaded as well. These are both heavy packages that take a while to load and compile.
+
+[[[
+Gofer it
+  smalltalkhubUser: 'SvenVanCaekenberghe' project: 'Reddit';
+  configuration;
+  loadStable.
+]]]
+
+You will have to configure the connection to your PostgreSQL instance. One way to do so it to edit the method ==RedditDatabaseResource class>> createLogin==. After you have done so, make sure to clear the cached version by doing ==RedditDatabaseResource resetLogin==.
+
+Alternatively, you can download a prebuilt image containing everything as the latest successful build artifact from the Pharo Contribution CI job called Reddit *https://ci.inria.fr/pharo-contribution/job/Reddit/*
