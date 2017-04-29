@@ -37,6 +37,8 @@ Object subclass: #RedditLink
 
 Next,  use the class refactoring tool to automatically generate accessors (getters and setters) for all our instance variables. With these implemented we can write our ==initialize== and ==printOn:== methods.
 
+
+!!!! Initialization and more
 [[[
 RedditLink >> initialize
 	self 
@@ -57,7 +59,7 @@ RedditLink >> printOn: stream
 We also add a method named ==posted==  that will return the ==Duration== of time the link now exists. We will need that when rendering links later on. 
 
 [[[
-RedditLink >> posted
+RedditLink >> age
     ^ TimeStamp now - self created
 ]]]
 
@@ -71,8 +73,19 @@ RedditLink class >> withUrl: url title: title
       yourself
 ]]]
 
+At this point you should be able to obtain an inspector on an instance as shown in Figure *@redditModel1*.
 
-To make the manipulation of objects easier we also add an example method. Pressing the green arrow will open an inspector on the object.
+[[[
+(RedditLink withUrl: 'http://pharo.org' title: 'pharo') inspect
+]]]
+
+
++RedditLink defined.>file://figures/redditModel1.png|width=110|label=redditModel1+
+
+
+!!!! Example support
+To make the manipulation of examples easier we also add an example method on the class side and 
+we annotate with the pragram ==<sampleInstance>==. This way pressing the green arrow will open an inspector on the object and this is super handy.
 
 [[[
 RedditLink class >> pharoDotOrg
@@ -84,17 +97,7 @@ RedditLink class >> pharoDotOrg
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+!!!! Voting support
 
 Apart from creating and displaying RedditLinks, users should be able to vote them up and down. Therefore, we add two action methods, ==voteUp== and ==voteDown==.
 
@@ -106,82 +109,144 @@ RedditLink >> voteDown
     self points > 0 ifTrue: [ self points: self points - 1 ]
 ]]]
 
+The core of ==RedditLink== objects is now finished. Everything is ready to make instances and use them.
 
-We also introduce the class method ==withUrl:title:== to create new instances as follows
 
-[[[
-RedditLink class >> withUrl: url title: title
-   ^ self new url: url; title: title; yourself
-]]]
 
-The core of the RedditLink object is now finished. Everything is ready to make instances and use them.
+
 
 
 !!RedditLinkTests
 
-Units tests are very important, not so much in small examples like this one, but especially in larger applications. Having a good set of unit tests with descent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in some workspace, you can just as well write a unit test. We created the class ==RedditLinkTests== as a subclass of ==TestCase== and add 3 test methods.
+Units tests are very important, not so much in small examples like this one, but especially in larger applications. Having a good set of unit tests with descent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in some workspace, you can just as well write a unit test. 
 
 
-After creating a RedditLink object, and/or manipulating it, these methods assert that certain conditions hold. To improve code sharing (we'll need it again in Section 5) we add a method called ==assertContractUsing:== to ==RedditLink== that checks the basic contract of the receiver, using the method ==assert:== on an arbitrary object. For completeness, we also implement a general ==isValid== testing method.
+!!!! TestCase creation
+We create the class ==RedditLinkTests== as a subclass of ==TestCase== and add 3 test methods.
 
+[[[
+TestCase subclass: #RedditLinkTest
+	instanceVariableNames: ''
+	classVariableNames: ''
+	package: 'Reddit'
+]]]
+
+After creating a ==RedditLink== object, and/or manipulating it, these methods assert that certain conditions hold. To improve code sharing (we'll need it again in Section 5) we add a method called ==assertContractUsing:== to ==RedditLink== that checks the basic contract of the receiver, using the method ==assert:== on an arbitrary object. For completeness, we also implement a general ==valiate== testing method.
+
+@todo For Sven: I did not really get the interested of this is assert method and in particular to pass a test. Since object define assert: we could just use this one. 
 
 [[[
 RedditLink >> assertContractUsing: object
-   object perform: #assert: with: (self url isNil or: [ self url isKindOf: String ]).
-   object perform: #assert: with: (self title isNil or: [ self title isKindOf: String ]).
-   object perform: #assert: with: (self created isKindOf: TimeStamp).
-   object perform: #assert: with: (self points isKindOf: Integer).
-   object perform: #assert: with: (self posted asSeconds >= 0).
-   object perform: #assert: with: (self printString isKindOf: String)
-   
-RedditLink >> isValid
+   object assert: (self url isNil or: [ self url isString ]).
+   object assert: (self title isNil or: [ self title isString ]).
+   object assert: (self created isKindOf: DateAndTime).
+   object assert: (self points isKindOf: Integer).
+   object assert: self age asSeconds >= 0.
+   object assert: self printString isString
+]]]
+
+[[[
+RedditLink >> validate
     self assertContractUsing: self
 ]]]
 
+!!!! Tests
 Now we can take advantage of these methods in our tests.
 
 [[[
 RedditLinkTests >> testInitialState
-    | link | 
-    link := RedditLink new. 
-    link assertContractUsing: self. 
-    self assert: link points isZero
+	| link |
+	link := RedditLink new.
+	link assertContractUsing: self.
+	self assert: link points isZero
 ]]]
 
 [[[
 RedditLinkTests >> testCreate
-    | link url title | 
-    url := 'http://www.seaside.st'. 
-    title := 'Seaside'. 
-    link := RedditLink withUrl: url title: title. 
-    link assertContractUsing: self. 
-    self assert: link points isZero. 
-    self assert: link url = url. 
-    self assert: link title = title
+	| link url title |
+	url := 'http://www.seaside.st'.
+	title := 'Seaside'.
+	link := RedditLink withUrl: url title: title.
+	link assertContractUsing: self.
+	self assert: link points isZero.
+	self assert: link url equals: url.
+	self assert: link title equals: title
 ]]]
+
+
 
 [[[
 RedditLinkTests >> testVoting
-    | link | 
-    link := RedditLink new. 
-    link assertContractUsing: self. 
-    self assert: link points isZero. link voteUp. 
-    self assert: link points = 1. 
-    link voteDown. self assert: 
-    link points isZero. 
-    link voteDown. 
-    self assert: link points isZero
+	| link |
+	link := RedditLink new.
+	link assertContractUsing: self.
+	self assert: link points isZero.
+	link voteUp.
+	self assert: link points equals: 1.
+	link voteDown.
+	self assert: link points isZero.
+	link voteDown.
+	self assert: link points isZero
 ]]]
 
+Pharo has integrated tools to quickly run these tests. There is a separate Test Runner, but you can run tests directly from a Browser as well. The browser even has a permanent indication for successful and failed tests.
 
-!!! Describing Database Data
++First green tests.>file://figures/redditLinkTest.png|width=110|label=redditModel1+
 
-To make our application less trivial, we are going to make our collection of links persistent in a relation database. For this we are going to use Glorp, an object-relational mapping tool. Glorp will take care of all the SQL! To do its magic, Glorp needs a DescriptorSystem that tells it 3 things: the class models involved, the tables involved and the way the two map (which it calls a descriptor). In this simple case we are just mapping one object into one table, so the descriptor system might look a bit verbose. Just remember that Glorp can do much, much more advanced things. Furthermore, there exist extensions to Glorp that implement ActiveRecord style automatic descriptors.
+@@note A little remark. This is often even better to write tests before the code of classes. 
+This way you are always sure that what you write is fulfilling your specifications. 
+
+!! Intermezzo: Installing Postgres
+
+!!!! On Mac
+
+We downloaded Postgres.app from the web site of *https://www.postgresql.org/download/*
+
+We follow the step mentioned on the page.
+
+- Download: Move to Applications folder and Double Click. If you don't move Postgres.app to the Applications folder, you will see a warning about an unidentified developer and won't be able to open it.
+- Click "Initialize" to create a new server
+- Configure your $PATH to use the included command line tools (optional):
+
+[[[
+sudo mkdir -p /etc/paths.d &&
+echo /Applications/Postgres.app/Contents/Versions/latest/bin 
+| sudo tee /etc/paths.d/postgresapp
+]]]
+
+Done! You now have a PostgreSQL server running on your Mac with these default settings:
+
+[[[
+Host: localhost
+Port: 5432
+User your system user name
+Database same as user
+Password none
+Connection URL postgresql://localhost
+]]]
+
+!! Intermezzo: Installing Glorp
+
+[[[
+Metacello new
+       smalltalkhubUser: 'DBXTalk' project: 'Garage';
+       configuration: 'GarageGlorp';
+       version: #stable;
+   load. ]]]
+   
+   
+!! RedditSchema: Describing database data
+
+To make our application less trivial, we are going to make our collection of links persistent in a relation database. For this we are going to use Glorp, an object-relational mapping tool. Glorp will take care of all the SQL! To do its magic, Glorp needs a ==DescriptorSystem== that tells it 3 things: the class models involved, the tables involved and the way the two map (which it calls a descriptor). 
+
+
+
+In this simple case we are just mapping one object into one table, so the descriptor system might look a bit verbose. Just remember that Glorp can do much, much more advanced things. Furthermore, there exist extensions to Glorp that implement ActiveRecord style automatic descriptors.
 
 !!!Loading Glorp.
 Here is how you should load Glorp 
 
-!!! Defining Schema
+!!!! Defining Schema
 First let us define a new class description named ==RedditSchemaDescriptor== subclass of  ==DescriptorSystem== for Glorp.
 
 [[[
