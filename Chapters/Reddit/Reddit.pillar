@@ -116,7 +116,7 @@ The core of ==RedditLink== objects is now finished. Everything is ready to make 
 
 
 
-!!RedditLinkTests
+!! RedditLinkTests
 
 Units tests are very important, not so much in small examples like this one, but especially in larger applications. Having a good set of unit tests with descent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in some workspace, you can just as well write a unit test. 
 
@@ -196,7 +196,10 @@ Pharo has integrated tools to quickly run these tests. There is a separate Test 
 @@note A little remark. This is often even better to write tests before the code of classes. 
 This way you are always sure that what you write is fulfilling your specifications. 
 
-!! Intermezzo: Installing Postgres
+
+!! Intermezzo
+
+!!! Installing Postgres
 
 !!!! On Mac
 
@@ -219,20 +222,26 @@ Done! You now have a PostgreSQL server running on your Mac with these default se
 [[[
 Host: localhost
 Port: 5432
-User your system user name
-Database same as user
+User: your system user name
+Database: same as user
 Password none
 Connection URL postgresql://localhost
 ]]]
 
-!! Intermezzo: Installing Glorp
+On the command line you can type 
+[[[
+/Applications/Postgres.app/Contents/Versions/9.6/bin/psql -p5432
+]]]
+
+!!! Intermezzo: Installing Glorp
 
 [[[
 Metacello new
-       smalltalkhubUser: 'DBXTalk' project: 'Garage';
-       configuration: 'GarageGlorp';
-       version: #stable;
-   load. ]]]
+	smalltalkhubUser: 'DBXTalk' project: 'Garage';
+	configuration: 'GarageGlorp';
+	version: #stable;
+	load.
+]]]
    
    
 !! RedditSchema: Describing database data
@@ -243,9 +252,6 @@ To make our application less trivial, we are going to make our collection of lin
 
 In this simple case we are just mapping one object into one table, so the descriptor system might look a bit verbose. Just remember that Glorp can do much, much more advanced things. Furthermore, there exist extensions to Glorp that implement ActiveRecord style automatic descriptors.
 
-!!!Loading Glorp.
-Here is how you should load Glorp 
-
 !!!! Defining Schema
 First let us define a new class description named ==RedditSchemaDescriptor== subclass of  ==DescriptorSystem== for Glorp.
 
@@ -253,8 +259,7 @@ First let us define a new class description named ==RedditSchemaDescriptor== sub
 DescriptorSystem subclass: #RedditSchemaDescriptor
    instanceVariableNames: '' 
    classVariableNames: '' 
-   poolDictionaries: '' 
-   category: 'Reddit-DB'
+   package: 'Reddit-DB'
 ]]]
 
 
@@ -269,12 +274,16 @@ RedditSchemaDescriptor >> classModelForRedditLink: aClassModel
     #(id url title created points) do: [ :each | aClassModel newAttributeNamed: each ]
 ]]]
 
+
+!!!! Tables
 The second step is to describe which tables are involved. So here we list all the fields (columns) of our table ==REDDIT_LINKS==. Glorp shields us from the differences between different SQL dialects. Note how id is designated to be a primary key. The serial type will result in an SQL sequence being used. @@what is that a serial type@@
 
 [[[
 RedditSchemaDescriptor >> allTableNames
      ^ #( 'REDDIT_LINKS' )
-
+]]]
+ 
+[[[ 
 RedditSchemaDescriptor >> tableForREDDIT_LINKS: aTable
      (aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey. 
      aTable createFieldNamed: 'url' type: (platform varchar: 64). 
@@ -297,17 +306,20 @@ RedditSchemaDescriptor >> descriptorForRedditLink: aDescriptor
      (aDescriptor newMapping: DirectMapping) from: #points to: (table fieldNamed: 'points')
 ]]]
 
-!!!Connecting to the Database
+!! Connecting to the Database
 
-Let's assume you installed and configured PostgreSQL on some machine and that you created some database there. @@how@@
-We now have to specify how Glorp has to connect to PostgreSQL. We do this creating a new class named ==RedditDatabaseResource==
+Let's assume you installed and configured PostgreSQL on some machine and that you created some database there.
+
+
+!!!! Creation a database resource
+
+We now have to specify how Glorp has to connect to PostgreSQL. We do this creating a new class named ==RedditDatabaseResource==.
 
 [[[
 Object subclass: #RedditDatabaseResource
    instanceVariableNames: '' 
    classVariableNames: 'DefaultLogin' 
-   poolDictionaries: '' 
-   category: 'Reddit-DB'
+   package: 'Reddit-DB'
 ]]]
 
 We will add some class methods (as well as a class variable called ==DefaultLogin==).
@@ -316,11 +328,15 @@ We will add some class methods (as well as a class variable called ==DefaultLogi
 RedditDatabaseResource class >> login
      DefaultLogin ifNil: [ DefaultLogin := self createLogin ]. 
      ^ DefaultLogin
+]]]
 
+[[[
 RedditDatabaseResource class >> login: aLogin
      "see #createLogin for an example of how to create a Login object"      
      DefaultLogin := aLogin
-
+]]]
+ 
+[[[
 RedditDatabaseResource class >> createLogin
      ^ Login new 
           database: PostgreSQLPlatform new; 
@@ -331,19 +347,24 @@ RedditDatabaseResource class >> createLogin
 ]]]
 
 
-The username and password speak for themselves, the ==connectString== contains the hostname, port number and database name (after an underscore). Glorp accesses a database through sessions. A session is most easily started from a descriptor system given a login as argument, that's what we do in the ==session== helper class method.
+The username and password speak for themselves, the ==connectString== contains the hostname, port number and database name (after an underscore).
 
+!!!! Using Session 
+Glorp accesses a database through sessions. A session is most easily started from a descriptor system given a login as argument, that's what we do in the ==session== helper class method.
 
 [[[
 RedditDatabaseResource >> session
      ^ RedditSchema sessionForLogin: self login
+]]]
 
-RedditDatabaseResource >> createTables
-     "self createTables" 
+[[[
+RedditDatabaseResource >> create
      "This has to be done only once, be sure to set #login"
      |session | 
      session := self session. 
-     session accessor login; logging: true. 
+     session accessor 
+        login; 
+        logging: true. 
      session inTransactionDo: [ session createTables ]. 
      session accessor logout
 ]]]
@@ -351,18 +372,16 @@ RedditDatabaseResource >> createTables
 Glorp can even help us to create our ==REDDIT_LINKS== table, that is what the ==createTables== class method does. So we truly don't have to use any SQL! The flow should be familiar: get a session, login, do some work in a transaction and logout. By setting logging to true, the generated SQL statements will be printed on the Transcript (comment this out for production use).
 
 
-!!!Time to test: RedditDatabaseTest
-
+!! Time to test: RedditDatabaseTest
 
 With our RedditSchema descriptor system and our ==RedditLinksDatabaseResource== we are now ready to test the persistency of our model. We create another class named ==RedditDatabaseTest== which inherits from ==TestCase==. These tests need an instance variable called ==session== to hold the Glorp session, as well as ==setUp== and ==teardown== methods.
 
 
 [[[
 Object subclass: #RedditDatabaseTest
-   instanceVariableNames: 'session' 
-   classVariableNames: '' 
-   poolDictionaries: '' 
-   category: 'Reddit-DB'
+   instanceVariableNames: 'session'
+   classVariableNames: ''
+   package: 'Reddit-DB'
 ]]]
 
 [[[
@@ -394,13 +413,13 @@ The second test creates a new ==RedditLink== and then registers it with the sess
 [[[
 RedditDatabaseTest >> testUpdate
     | link url title id |
-    url := 'http://www.seaside.st'. 
-    title := 'Seaside Unit Test'. 
+    url := 'http://www.seaside.st'.
+    title := 'Seaside Unit Test'.
     link := RedditLink withUrl: url title: title.
-    session inUnitOfWorkDo: [ session register: link ]. 
-         id := link id. 
-     session inUnitOfWorkDo: [ session register: link. link voteUp ].      
-     session reset.
+    session inUnitOfWorkDo: [ session register: link ].
+    id := link id.
+    session inUnitOfWorkDo: [ session register: link. link voteUp ].
+    session reset.
 ]]]
 
  The third test checks if updating an existing persistent object works as expected. Note that the actual modification, the ==voteUp==, has to be done inside a unit of work to a registered object for it to be picked up by Glorp.
@@ -413,25 +432,24 @@ RedditDatabaseTest >> testCreate
      link := RedditLink withUrl: url title: title.
      session inUnitOfWorkDo: [ session register: link ].
      id := link id.
-     self assert: id notNil. 
+     self assert: id notNil.
      session reset.
-     link := session readOneOf: RedditLink where: [ :each | each id = id ]. 
+     link := session readOneOf: RedditLink where: [ :each | each id = id ].
      link assertContractUsing: self.
      self assert: link url = url.
-     self assert: link title = title. 
+     self assert: link title = title.
      session delete: link
 ]]]
 
 
-!!!RedditSession
+!! RedditSession
 We are almost ready to start writing the GUI of our actual web application. Seaside web applications often have a session object that keeps the application's state during the user's interaction with it. We need to extend that session with a database session. We define a new class  ==RedditSession== as a subclass of ==WASession==. In addition, it has an instance variable called ==glorpSession== to hold a Glorp session to the database.
 
 [[[
 WASession subclass: #RedditSession
-   instanceVariableNames: 'glorpSession' 
-   classVariableNames: '' 
-   poolDictionaries: '' 
-   category: 'Reddit-DB'
+   instanceVariableNames: 'glorpSession'
+   classVariableNames: ''
+   package: 'Reddit-DB'
 ]]]
 
 Note how we are using lazy initialization in the ==glorpSession== accessor.
@@ -439,15 +457,17 @@ In ==newGlorpSession== we're making use of our ==RedditDatabaseResource==.
 
 [[[
 RedditSession >> glorpSession
-   glorpSession ifNil: [ glorpSession := self newGlorpSession ]. 
-   glorpSession accessor isLoggedIn ifFalse: [ glorpSession accessor login ]. 
+   glorpSession ifNil: [ glorpSession := self newGlorpSession ].
+   glorpSession accessor isLoggedIn
+       ifFalse: [ glorpSession accessor login ].
    ^ glorpSession
 ]]]
 
 [[[
 RedditSession >> newGlorpSession
      | session | 
-     session := RedditDatabaseResource session. "session accessor logging: true." 
+     session := RedditDatabaseResource session.
+     "session accessor logging: true."
      ^ session
 ]]]
 
@@ -455,7 +475,7 @@ The ==unregistered== is a hook called by Seaside whenever a session expires, we 
 
 [[[
 RedditSession >> unregistered
-     super unregistered. 
+     super unregistered.
      self teardownGlorpSession
 ]]]
 
@@ -464,68 +484,71 @@ RedditSession >> teardownGlorpSession
      self glorpSession logout
 ]]]
 
-!!! Web Part: the Component WAReddit
+!! Web Part: the Component WAReddit
 
 We can finally start with our web app itself. Figure 1 shows the main page of the Reddit.st app. There are four sections in this page: a header or title section, some action links, a list of some of the highest or top ranking links and a list if some of the latest or most recent links.
 
 +Reddit>file://figures/redditOne.png|width=50|label=redditOne+
 
 
-
 We create a ==WAComponent== subclass called ==WAReddit==. This will become our central or root web app component. We start by writing the rendering methods.
 
 [[[
 WAReddit >> renderContentOn: html
-    html heading: 'Reddit.st'. 
-    html heading level: 3; with: 'In 10 elegant Smalltalk classes'. 
-    self renderActionsOn: html. 
-    self renderHighestRankingLinksOn: html. 
+    html heading: 'Reddit.st'.
+    html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
+    self renderActionsOn: html.
+    self renderHighestRankingLinksOn: html.
     self renderLatestLinksOn: html
 ]]]
 
 [[[
 WAReddit >> renderActionsOn: html
-    html paragraph: [ html anchor callback: [ ]; with: 'Refresh'. 
+    html paragraph: [ html anchor callback: [ ]; with: 'Refresh'.
     html anchor callback: [ self inform: 'Not yet implemented' ]; with: 'New Link' ]
 ]]]
 
 [[[
 WAReddit >> renderHighestRankingLinksOn: html
-    html heading level: 2; with: 'Highest Ranking Links'. 
+    html heading level: 2; with: 'Highest Ranking Links'.
     html orderedList: [
           self highestRankingLinks do: [ :each | self renderLink: each on: html ] ]
 ]]]
 
 [[[
 WAReddit >> renderLatestLinksOn: html
-    html heading level: 2; with: 'Latest Links'. 
+    html heading level: 2; with: 'Latest Links'.
     html orderedList: [
          self latestLinks do: [ :each | self renderLink: each on: html ] ]
 ]]]
 
 [[[
 WAReddit >> renderLink: link on: html
-    html listItem: [ html anchor url: link url; title: link url; with: link title.   
-    html text: ' Posted ', (self class durationString: link posted), ' ago. '. 
-    html text: link points asString, ' points. '. 
-    html anchor 
-         callback: [ self voteUp: link ]; 
-         title: 'Vote this link up'; 
-         with: 'Up'. 
-    html space. 
-    html anchor 
-         callback: [ self voteDown: link ]; 
+    html listItem: [ html anchor url: link url; title: link url; with: link title.
+    html text: ' Posted ', (self class durationString: link posted), ' ago. '.
+    html text: link points asString, ' points. '.
+    html anchor
+         callback: [ self voteUp: link ];
+         title: 'Vote this link up';
+         with: 'Up'.
+    html space.
+    html anchor
+         callback: [ self voteDown: link ];
          title: 'Vote this link down'; with: 'Down' ]
 ]]]
 
-Starting with the main ==renderContentOn:== method, the rendering of each section is delegated to its own method. Note how ==renderLink:on:== is used 2 times. For now, we're not yet implementing the 'New Link' action. Our rendering methods depend on 5 extra methods: ==highestRankingLinks==, ==latestLinks==, the class method ==durationString:== and the actions methods ==voteUp:== and ==voteDown:==. Only the first three are needed to render the page itself.
+Starting with the main ==renderContentOn:== method, the rendering of each section is delegated to its own method. Note how ==renderLink:on:== is used 2 times. 
 
+!!!! Rendering Link
+
+For now, we're not yet implementing the 'New Link' action. Our rendering methods depend on 5 extra methods: ==highestRankingLinks==, ==latestLinks==, the class method ==durationString:== and the actions methods ==voteUp:== and ==voteDown:==. Only the first three are needed to render the page itself.
 
 [[[
 WAReddit >> highestRankingLinks
    | query | 
    query := (Query readManyOf: RedditLink)
-              orderBy: [ :each | each points descending ]; limit: 20; yourself.
+              orderBy: [ :each | each points descending ]; 
+              limit: 20; yourself.
    ^ self session glorpSession execute: query
 ]]]
 
@@ -533,23 +556,24 @@ WAReddit >> highestRankingLinks
 WAReddit >> latestLinks
    | query | 
    query := (Query readManyOf: RedditLink)
-              orderBy: [ :each | each created descending]; limit: 20; yourself.
+              orderBy: [ :each | each created descending];
+              limit: 20; yourself.
    ^ self session glorpSession execute: query
 ]]]
 
 [[[
 WAReddit >> durationString: duration
-   ^ String streamContents: [ :stream | 
-          | needSpace printer | 
-          needSpace := false. 
-          printer := [ :value :word |
-                         value isZero ifFalse: [ 
-                              needSpace ifTrue: [ stream space ]. 
-                              stream nextPutAll: (value pluralize: word). 
-                              needSpace := true ] ].
-          printer value: duration days value: 'day'. 
-          printer value: duration hours value: 'hour'. 
-          printer value: duration minutes value: 'minute' ]
+   ^ String streamContents: [ :stream |
+         | needSpace printer |
+         needSpace := false.
+         printer := [ :value :word |
+                       value isZero ifFalse: [
+                            needSpace ifTrue: [ stream space ].
+                            stream nextPutAll: (value pluralize: word).
+                            needSpace := true ] ].
+        printer value: duration days value: 'day'.
+        printer value: duration hours value: 'hour'.
+        printer value: duration minutes value: 'minute' ]
 ]]]
 
 In ==highestRankingLinks== and ==latestLinks==, we explicitly build up and execute Query objects with some more advanced options. For duration string conversion we use the powerful ==pluralize== method. With these in place we can already render the page. Since we did not yet add any CSS styling, the result will look rather dull.
@@ -557,21 +581,27 @@ In ==highestRankingLinks== and ==latestLinks==, we explicitly build up and execu
 [[[
 WAReddit >> voteDown:link
     self session glorpSession
-              inUnitOfWorkDo: [ :session | session register: link. 
-                            link voteDown]
+       inUnitOfWorkDo: [ :session | session register: link.
+                            link voteDown ]
 ]]]
-
 
 
 [[[
 WAReddit >> voteUp: link
    self session glorpSession 
-      inUnitOfWorkDo: [ :session | session register: link.  link voteUp ]
+      inUnitOfWorkDo: [ :session | 
+           session register: link.
+           link voteUp ]
 ]]]
 
 Voting links up or down is trivial, like with our database test, we only have to make sure to do the object modifications inside a Glorp unit of work and the actual SQL update will be done automatically.
 
-!!!RedditFileLibrary
+
+
+
+
+
+!! RedditFileLibrary
 
 To style our web app, we'll be reusing the CSS file from Reddit.lisp. This CSS code references one small GIF for its background gradient. We need to make sure our application makes use of the CSS file and that we serve the actual files. Seaside can serve these files in a couple of ways, we'll be using the ==FileLibrary== approach. This is a class where each resource served is implemented as a method.
 
@@ -597,16 +627,16 @@ RedditFileLibrary class >> initialize
 
 We register our application under the handler 'reddit' so its URL will become something like ==http://localhost:8080/reddit==. Then we tell it to use our custom session class and finally add our file library. We now have a nicely styled, working web app.
 
-!!!WARedditLinkEditor
+!! WARedditLinkEditor
 
-One of Seaside's main advantages over other web application frameworks is its support for components. Especially for large and complex projects this makes a huge difference. We'll be introducing a new component to allow the user to enter the necessary information when adding a new link. Consider the difference between figure 1 and figure 2: when the user clicks the =='New Link'== anchor, we'll add an editor just below (while hiding the =='New Link'== anchor). The editor will have its own 'Save' and 'Cancel' buttons. Both of these will dismiss the editor, saving or cancelling the new link.
+One of Seaside's main advantages over other web application frameworks is its support for components. Especially for large and complex projects this makes a huge difference. We'll be introducing a new component to allow the user to enter the necessary information when adding a new link. Consider the difference between Figure 1 and Figure 2: when the user clicks the =='New Link'== anchor, we'll add an editor just below (while hiding the =='New Link'== anchor). The editor will have its own 'Save' and 'Cancel' buttons. Both of these will dismiss the editor, saving or cancelling the new link.
 
 
 redditNewLink
 
 
 
-How is Seaside's component model powerful ? As we will see next, the component is written without any knowledge of where it will be used. Its validation logic is independent. It is used just by embedding it and by wiring it to its user in a simple way. The subcomponent functions independently from its embedding parent while each keeps its own state: whether the component is visible or not, you can keep on voting links up or down, and doing so will not alter the contents of the component.
+How is Seaside's component model powerful? As we will see next, the component is written without any knowledge of where it will be used. Its validation logic is independent. It is used just by embedding it and by wiring it to its user in a simple way. The subcomponent functions independently from its embedding parent while each keeps its own state: whether the component is visible or not, you can keep on voting links up or down, and doing so will not alter the contents of the component.
 
 
 To prove our point, we'll be using yet another component inside our link editor: a simple CAPTCHA component. This will be implemented in the final section, but used here as a black box.
@@ -618,8 +648,8 @@ WAReddit >> renderContentOn: html
      html heading: 'Reddit.st'. 
      html heading level: 3; with: 'In 10 elegant Smalltalk classes'. 
      self renderActionsOn: html. 
-	 self linkEditor notNil
-     	  ifTrue: [ html render: self linkEditor ].
+     self linkEditor notNil
+        ifTrue: [ html render: self linkEditor ].
      self renderHighestRankingLinksOn: html. 
      self renderLatestLinksOn: html
 ]]]
@@ -734,7 +764,7 @@ WARedditLinkEditor >> createLink
 
 Most of the code should be familiar by now. New is how ==cancel== and ==save== use ==answer:== to return to whoever called upon this component. Before ==save== returns successfully, a number of validation tests are done. When one of these tests fails, a message is shown and the operation is aborted. The ==isUrlValid== method actually tries to resolve the URL. Finally, ==createLink== instantiates a new ==RedditLink== instance based on the valid fields entered by the user. Note how the CAPTCHA is used as a true component.
 
-!!! WARedditCaptcha: A last Web Component
+!! WARedditCaptcha: A last Web Component
 
 The last and simplest web component is a CAPTCHA that presents a simple addition in words. This component does not need answer logic. The class ==WARedditCaptcha== is again a subclass of ==WAComponent== with the following instance variables and accessors: ==x==, ==y==, and ==sum==.
 
@@ -763,7 +793,7 @@ WARedditCaptcha >> isSolved
 
 Each time the CAPTCHA is rendered, ==x== and ==y== get a new random value between 1 and 10. Next, the addition is presented in words. The ==isSolved== method checks if the user answered correctly.
 
-!!! Conclusion
+!! Conclusion
 
 The source code discussed in this chapter is available the SqueakSource project called ADayAtTheBeach. Look for the package called Reddit.
 
