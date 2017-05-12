@@ -1,6 +1,6 @@
 MAIN = book
 CHAPTERS = \
-	Chapters/Reddit/Reddit \
+	Chapters/Reddit/Reddit
 
 OUTPUTDIRECTORY = build
 LATEXTEMPLATE = support/templates/main.latex.mustache
