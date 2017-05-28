@@ -639,9 +639,9 @@ WAReddit class >> initialize
 ]]]
 
 
-Finally we register our main component as an application under the handler 'reddit' so its URL will become something like ==http://localhost:8080/reddit==. Then we tell it to use our custom session class and finally add our file library. We now have a nicely styled, working web app.
+Finally we register our main component as an application under the handler 'reddit' so its URL will become something like ==http://localhost:8080/reddit==. We also set our custom session class and as well as our file library. We now should have a nicely styled, and working web app.
 
-@@note As at May/2017, the latest stable version of Seaside in Pharo 6 doesn't yet support the Seaside Control panel, so you may have to start a server from the playgroud by evaluating [[[ZnZincServerAdaptor startOn: 8080.]]] and then navigating to localhost:8080 in your browsers.
+@@note As at May/2017, the latest stable version of Seaside in Pharo 6 doesn't yet support the Seaside Control panel, so you may have to start a server from the playgroud by evaluating [[[ZnZincServerAdaptor startOn: 8080.]]] and then navigating to localhost:8080 in your browser.
 
 !! WARedditLinkEditor
 
