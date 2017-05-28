@@ -6,14 +6,11 @@ CRUD is an acronym for the Create, Read, Update and Delete operations in a persi
 Technically speaking, we will show how to implement a small but non-trivial web application in Pharo *http://www.pharo.org* using Seaside *http://seaside.st*, Glorp *http://glorp.org* (an ORM) and PostgreSQL *http://www.postgresql.org*.
 The appendix also explains how to get the source code discussed in this article.
 
-
 To give some context to our journey, we will base our example on Reddit, *http://www.reddit.com*, a web application where users can post interesting links that get voted up or down as an example domain. The idea is that the 'best' links end up with the most points automatically. There are other websites like Delicious, Digg and Hacker News that also exist in this area of social bookmarking, so it's an interesting domain to explore.
-
 
 The 10 main sections of this booklet follow the development of the 10 classes making up the application. The focus of the Pharo version is less about the small size of the application or the high developer productivity, but more on the fact that we can cover so much ground using powerful frameworks, as well as the natural development flow from model to tests and persistence to web GUI.
 
-
-Finally, before jumping in, the material included in this booklet was originally written by Sven Van Caekenberghe and published at: *https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740*. We thank him for his permission to use this work, and to create this booklet.  We assume that you understand what web applications are and the basics of how Seaside  works. If not, you should read the Seaside Chapter available in Pharo by Example or the introduction to Dynamic Web Development with Seaside available at *http://books.pharo.org*. We further assume that you have a basic understanding of relational databases and/or SQL.
+Finally, before jumping in, the material included in this booklet was originally written by Sven Van Caekenberghe and published at: *https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740*. We thank him for his permission to use this work, and to create this booklet.  We assume that you understand what web applications are and the basics of how Seaside works. If not, you should read the Seaside Chapter available in Pharo by Example or the introduction to Dynamic Web Development with Seaside available at *http://books.pharo.org*. We further assume that you have a basic understanding of relational databases and/or SQL.
 
 
 !! First RedditLink: a Model
@@ -23,9 +20,9 @@ The central object of our application is ==RedditLink==, representing an interes
 These are naturally instance variables of a new class, which we create by subclassing ==Object== and editing a class template in a browser like this:
 
 [[[
-Object subclass: #RedditLink 
-   instanceVariableNames: 'id url title created points' 
-   classVariableNames: '' 
+Object subclass: #RedditLink
+   instanceVariableNames: 'id url title created points'
+   classVariableNames: ''
    package: 'Reddit'
 ]]]
 
@@ -35,33 +32,33 @@ Next, use the class refactoring tool to automatically generate accessors (getter
 !!!! Initialization and more
 [[[
 RedditLink >> initialize
-	self 
+	self
 		points: 0;
 		created: DateAndTime now
 ]]]
 
 [[[
 RedditLink >> printOn: stream
-    super printOn: stream. 
-    stream nextPut: $(. 
-    self url printOn: stream. 
+    super printOn: stream.
+    stream nextPut: $(.
+    self url printOn: stream.
     stream nextPut: $,.
-    self title printOn: stream. 
+    self title printOn: stream.
     stream nextPut: $)
 ]]]
 
-We can also add a method named ==age== that will return the ==Duration== of time the link has existed. We will use this when rendering links later on. Notice how easily Pharo (and Smalltalk) deals with time arithmatic.
+We can also add a method named ==age== that will return the ==Duration== of time the link has existed. We will use this when rendering links later on. Notice how easily Pharo (and Smalltalk) deals with time arithmetic.
 
 [[[
 RedditLink >> age
     ^ DateAndTime now - self created
 ]]]
 
-To make it a little bit easier for others to create new instances of our object, we also add a class method called withUrl:title:.
+To make it a little bit easier for others to create new instances of our object, we also add a class method called ==withUrl:title:==.
 
 [[[
 RedditLink class >> withUrl: url title: title
-  ^ self new 
+  ^ self new
       url: url;
       title: title;
       yourself
@@ -90,7 +87,7 @@ RedditLink class >> pharoDotOrg
 
 !!!! Voting support
 
-Apart from creating and displaying RedditLinks, users should also be able to vote them up and down. To do this, we add two action methods, ==voteUp== and ==voteDown==.
+Apart from creating and displaying ==RedditLink== instances, users should also be able to vote them up and down. To do this, we add two action methods, ==voteUp== and ==voteDown==.
 
 [[[
 RedditLink >> voteUp
@@ -106,7 +103,7 @@ The core of ==RedditLink== objects is now finished. Everything is ready to make 
 
 !! RedditLinkTests
 
-Units tests are very important, less so in small examples like this one, but definitely in larger applications. Having a good set of unit tests with decent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in a workspace, you might just as well write a unit test, particularly when Pharo makes this very easy. 
+Unit tests are very important, less so in small examples like this one, but definitely in larger applications. Having a good set of unit tests with decent coverage helps protect the code during changes. At the same time, unit tests function as working documentation. Instead of writing scratch test code in a workspace, you might just as well write a unit test, particularly when Pharo makes this very easy.
 
 
 !!!! TestCase creation
@@ -119,18 +116,22 @@ TestCase subclass: #RedditLinkTests
 	package: 'Reddit'
 ]]]
 
-When creating a ==RedditLink== object, and/or manipulating it, we want to easily assert that certain conditions hold for its internal state. To help with code sharing (we'll use it again in Section 5) we add a helper class method called ==assertContractUsing:== to ==RedditLinkTests== that checks the basic contract of a RedditLink, using the method ==assert:== on an arbitrary object. 
-
+When creating a ==RedditLink== object, and/or manipulating it, we want to easily assert that certain conditions hold for its internal state. To help with code sharing (we'll use it again in Section 5) we add a helper method called ==assertContractUsing:== to ==RedditLink== that checks the basic contract of the receiver, using the method ==assert:== on an arbitrary object.
 
 [[[
-RedditLinkTests class >> assertContractUsing: aRedditLink
-   self assert: (aRedditLink url isNil or: [ aRedditLink url isString ]).
-   self assert: (aRedditLink title isNil or: [ aRedditLink title isString ]).
-   self assert: (aRedditLink created isKindOf: DateAndTime).
-   self assert: (aRedditLink points isKindOf: Integer).
-   self assert: aRedditLink age asSeconds >= 0.
+RedditLink >> assertContractUsing: object
+   object assert: (self url isNil or: [ self url isString ]).
+   object assert: (self title isNil or: [ self title isString ]).
+   object assert: (self created isKindOf: DateAndTime).
+   object assert: (self points isKindOf: Integer).
+   object assert: self age asSeconds >= 0.
+   object assert: self printString isString
 ]]]
 
+[[[
+RedditLink >> validate
+    self assertContractUsing: self
+]]]
 
 !!!! Tests
 Now we can take advantage of these methods in our tests.
@@ -139,7 +140,7 @@ Now we can take advantage of these methods in our tests.
 RedditLinkTests >> testInitialState
 	| link |
 	link := RedditLink new.
-	self class assertContractUsing: self.
+	link assertContractUsing: self.
 	self assert: link points isZero
 ]]]
 
@@ -149,7 +150,7 @@ RedditLinkTests >> testCreate
 	url := 'http://www.seaside.st'.
 	title := 'Seaside'.
 	link := RedditLink withUrl: url title: title.
-	self class assertContractUsing: link.
+	link assertContractUsing: self.
 	self assert: link points isZero.
 	self assert: link url equals: url.
 	self assert: link title equals: title
@@ -161,7 +162,7 @@ RedditLinkTests >> testCreate
 RedditLinkTests >> testVoting
 	| link |
 	link := RedditLink new.
-	self class assertContractUsing: link.
+	link assertContractUsing: self.
 	self assert: link points isZero.
 	link voteUp.
 	self assert: link points equals: 1.
@@ -175,8 +176,7 @@ Pharo has integrated tools to quickly run these tests. There is a separate Test 
 
 +First green tests.>file://figures/redditLinkTest.png|width=110|label=redditModel1+
 
-@@note A small remark. It is often better to write tests before even writing the code for a class. 
-By adopting this approach you are more confident that what you write is fulfilling your specifications. This is commonly called Test Driven Development (TDD)
+@@note A small remark. It is often better to write tests before even writing the code for a class. By adopting this approach you are more confident that what you write is fulfilling your specifications. This is commonly called Test Driven Development (TDD).
 
 
 !! Intermezzo
@@ -193,7 +193,7 @@ Download Postgres.app from the web site of *https://www.postgresql.org/download/
 
 [[[
 sudo mkdir -p /etc/paths.d &&
-echo /Applications/Postgres.app/Contents/Versions/latest/bin 
+echo /Applications/Postgres.app/Contents/Versions/latest/bin
 | sudo tee /etc/paths.d/postgresapp
 ]]]
 
@@ -208,12 +208,12 @@ Password none
 Connection URL postgresql://localhost
 ]]]
 
-On the command line you can type 
+On the command line you can type
 [[[
 /Applications/Postgres.app/Contents/Versions/9.6/bin/psql -p5432
 ]]]
 
-@@note If you are handy with the command line, you can also use the package manager Homebrew on the site *https://brew.sh/*, and execute the command [[[ brew install postgresql ]]] to install Postgres.
+@@note If you are handy with the command line, you can also use the package manager Homebrew (*https://brew.sh/*), and execute the command ==brew install postgresql== to install Postgres.
 
 !!! Intermezzo: Installing Glorp
 
@@ -226,16 +226,16 @@ Metacello new
 	version: #stable;
 	load.
 ]]]
-   
+
 and you also need to set Postgres as your default databse for Glorp to use by executing:
 [[[
 GAGlorpDriver beGlorpDefaultDriver.
 ]]]
- 
- 
+
+
 !! RedditSchema: Describing database data
 
-To make our application less trivial, we are going to make our collection of links persistent in a relation database. For this we are going to use Glorp, an object-relational mapping tool. Glorp will take care of all the SQL for us! To do its magic, Glorp needs a ==DescriptorSystem== that tells it 3 things: the class models involved, the tables involved and the way the two map (which it calls a descriptor). 
+To make our application less trivial, we are going to make our collection of links persistent in a relational database. For this we are going to use Glorp, an object-relational mapping tool. Glorp will take care of all the SQL for us! To do its magic, Glorp needs a ==DescriptorSystem== that tells it 3 things: the class models involved, the tables involved and the way the two map (which it calls a descriptor).
 
 
 In this case we are just mapping one object into one table, so the descriptor system might look a bit verbose. However, remember that Glorp can do many more advanced things and there are even extensions that implement automatic *ActiveRecord>https://www.martinfowler.com/eaaCatalog/activeRecord.html* style descriptors.
@@ -245,8 +245,8 @@ First we define a new class description named ==RedditSchemaDescriptor== as a su
 
 [[[
 DescriptorSystem subclass: #RedditSchemaDescriptor
-   instanceVariableNames: '' 
-   classVariableNames: '' 
+   instanceVariableNames: ''
+   classVariableNames: ''
    package: 'Reddit-DB'
 ]]]
 
@@ -264,18 +264,18 @@ RedditSchemaDescriptor >> classModelForRedditLink: aClassModel
 
 
 !!!! Tables
-The second step in our mapping is to describe which tables are involved. Here we list all the fields (columns) of our table ==REDDIT_LINKS==. Glorp shields us from the differences between different SQL dialects. Note how id is designated to be a primary key, and its type "platform serial" will result in an SQL sequence number being used. 
+The second step in our mapping is to describe which tables are involved. Here we list all the fields (columns) of our table ==REDDIT_LINKS==. Glorp shields us from the differences between different SQL dialects. Note how id is designated to be a primary key, and its type "platform serial" will result in an SQL sequence number being used.
 
 [[[
 RedditSchemaDescriptor >> allTableNames
      ^ #( 'REDDIT_LINKS' )
 ]]]
- 
-[[[ 
+
+[[[
 RedditSchemaDescriptor >> tableForREDDIT_LINKS: aTable
-     (aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey. 
-     aTable createFieldNamed: 'url' type: (platform varchar: 64). 
-     aTable createFieldNamed: 'title' type: (platform varchar: 64). 
+     (aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey.
+     aTable createFieldNamed: 'url' type: (platform varchar: 64).
+     aTable createFieldNamed: 'title' type: (platform varchar: 64).
      aTable createFieldNamed: 'created' type: platform timestamp.
      aTable createFieldNamed: 'points' type: platform integer
 ]]]
@@ -285,13 +285,13 @@ The third and final step is the actual descriptor describing the mapping between
 [[[
 RedditSchemaDescriptor >> descriptorForRedditLink: aDescriptor
 
-     | table | 
-     table := self tableNamed: 'REDDIT_LINKS'. 
-     aDescriptor table: table. 
-     (aDescriptor newMapping: DirectMapping) from: #id to: (table fieldNamed: 'id'). 
-     (aDescriptor newMapping: DirectMapping) from: #url to: (table fieldNamed: 'url'). 
-     (aDescriptor newMapping: DirectMapping) from: #title to: (table fieldNamed: 'title'). 
-     (aDescriptor newMapping: DirectMapping) from: #created to: (table fieldNamed: 'created'). 
+     | table |
+     table := self tableNamed: 'REDDIT_LINKS'.
+     aDescriptor table: table.
+     (aDescriptor newMapping: DirectMapping) from: #id to: (table fieldNamed: 'id').
+     (aDescriptor newMapping: DirectMapping) from: #url to: (table fieldNamed: 'url').
+     (aDescriptor newMapping: DirectMapping) from: #title to: (table fieldNamed: 'title').
+     (aDescriptor newMapping: DirectMapping) from: #created to: (table fieldNamed: 'created').
      (aDescriptor newMapping: DirectMapping) from: #points to: (table fieldNamed: 'points')
 ]]]
 
@@ -306,8 +306,8 @@ We now have to specify how Glorp can connect to PostgreSQL, and we do this by cr
 
 [[[
 Object subclass: #RedditDatabaseResource
-   instanceVariableNames: '' 
-   classVariableNames: 'DefaultLogin' 
+   instanceVariableNames: ''
+   classVariableNames: 'DefaultLogin'
    package: 'Reddit-DB'
 ]]]
 
@@ -315,30 +315,30 @@ We now add some configuration class methods (as well as a class variable called 
 
 [[[
 RedditDatabaseResource class >> login
-     DefaultLogin ifNil: [ DefaultLogin := self createLogin ]. 
+     DefaultLogin ifNil: [ DefaultLogin := self createLogin ].
      ^ DefaultLogin
 ]]]
 
 [[[
 RedditDatabaseResource class >> login: aLogin
-     "see #createLogin for an example of how to create a Login object"      
+     "see #createLogin for an example of how to create a Login object"
      DefaultLogin := aLogin
 ]]]
- 
+
 [[[
 RedditDatabaseResource class >> createLogin
-     ^ Login new 
-          database: PostgreSQLPlatform new; 
-          username: 'svc'; 
-          password: 'secret'; 
-          connectString: 'localhost:5432_playground'; 
+     ^ Login new
+          database: PostgreSQLPlatform new;
+          username: 'svc';
+          password: 'secret';
+          connectString: 'localhost:5432_playground';
           yourself
 ]]]
 
 
 The username and password speak for themselves, the ==connectString== contains the hostname, port number and database name (after an underscore), that you configured when installing Postgres earlier on.
 
-!!!! Using Session 
+!!!! Using Session
 Glorp accesses a database through sessions. A session is easily started from a descriptor system given a login as argument, and that's what we do in the ==session== helper class method.
 
 [[[
@@ -350,12 +350,12 @@ RedditDatabaseResource >> session
 RedditDatabaseResource >> create
 <sampleInstance>
      "This has to be done only once, be sure to set #login"
-     |session | 
-     session := self session. 
-     session accessor 
-        login; 
-        logging: true. 
-     session inTransactionDo: [ session createTables ]. 
+     |session |
+     session := self session.
+     session accessor
+        login;
+        logging: true.
+     session inTransactionDo: [ session createTables ].
      session accessor logout
 ]]]
 
@@ -392,9 +392,9 @@ Our first test reads all RedditLinks from the database, making sure they are val
 RedditDatabaseTest >> testQuery
     |links|
     links := session readManyOf: RedditLink.
-     links do: [ :each |
-                 RedditLinkTests assertContractUsing: each. 
-                 self assert: (each isKindOf: RedditLink) ]
+    links do: [ :each |
+                each assertContractUsing: self.
+                self assert: (each isKindOf: RedditLink) ]
 ]]]
 
 
@@ -408,7 +408,7 @@ RedditDatabaseTest >> testUpdate
 	link := RedditLink withUrl: url title: title.
 	session inUnitOfWorkDo: [ session register: link ].
 	id := link id.
-	session	inUnitOfWorkDo: [ 
+	session	inUnitOfWorkDo: [
 	            session register: link.
 	            link voteUp ].
 	session reset.
@@ -430,7 +430,7 @@ RedditDatabaseTest >> testCreate
      self assert: id notNil.
      session reset.
      link := session readOneOf: RedditLink where: [ :each | each id = id ].
-     RedditLinkTests assertContractUsing: link.
+     link assertContractUsing: self.
      self assert: link url equals: url.
      self assert: link title equals: title.
      session delete: link
@@ -462,7 +462,7 @@ WASession subclass: #RedditSession
 ]]]
 
 Note below how we are using lazy initialization in the ==glorpSession== accessor.
-In ==newGlorpSession== we're then making use of our ==RedditDatabaseResource==. 
+In ==newGlorpSession== we're then making use of our ==RedditDatabaseResource==.
 
 [[[
 RedditSession >> glorpSession
@@ -474,7 +474,7 @@ RedditSession >> glorpSession
 
 [[[
 RedditSession >> newGlorpSession
-     | session | 
+     | session |
      session := RedditDatabaseResource session.
      "session accessor logging: true."
      ^ session
@@ -493,11 +493,13 @@ RedditSession >> teardownGlorpSession
      self glorpSession logout
 ]]]
 
-!! Web Part: the Component WAReddit
+
+
+!! Web Part: the WAReddit Component
 
 We can finally start with our web app itself. Figure 1 shows the main page of the Reddit.st app. There are four sections in this page: a header or title section, some action links, a list of some of the highest or top ranking links and a list if some of the latest or most recent links.
 
-+Reddit>file://figures/redditOne.png|width=50|label=redditOne+
++The main page of Reddit.st>file://figures/redditOne.png|width=50|label=redditOne+
 
 
 We create a ==WAComponent== subclass called ==WAReddit==. This will become our central or root web app component. We start by writing the rendering methods.
@@ -553,7 +555,7 @@ WAReddit >> renderLink: link on: html
          title: 'Vote this link down'; with: 'Down' ]
 ]]]
 
-Starting with the main ==renderContentOn:== method, the rendering of each section is delegated to its own method. Note how ==renderLink:on:== is used 2 times. 
+Starting with the main ==renderContentOn:== method, the rendering of each section is delegated to its own method. Note how ==renderLink:on:== is used 2 times.
 
 !!!! Rendering Link
 
@@ -561,16 +563,16 @@ For now, we're not yet implementing the 'New Link' action. Our rendering methods
 
 [[[
 WAReddit >> highestRankingLinks
-   | query | 
+   | query |
    query := (Query read: RedditLink)
-              orderBy: [ :each | each points descending ]; 
+              orderBy: [ :each | each points descending ];
               limit: 20; yourself.
    ^ self session glorpSession execute: query
 ]]]
 
 [[[
 WAReddit >> latestLinks
-   | query | 
+   | query |
    query := (Query read: RedditLink)
               orderBy: [ :each | each created descending];
               limit: 20; yourself.
@@ -605,8 +607,8 @@ WAReddit >> voteDown: link
 
 [[[
 WAReddit >> voteUp: link
-   self session glorpSession 
-      inUnitOfWorkDo: [ :session | 
+   self session glorpSession
+      inUnitOfWorkDo: [ :session |
            session register: link.
            link voteUp ]
 ]]]
@@ -620,12 +622,12 @@ Voting links up or down is trivial, like with our database test, we only have to
 To style our web app, we'll be reusing the CSS file from Reddit.lisp. This CSS code references one small GIF for its background gradient. We need to make sure our application makes use of the CSS file and that we also serve the actual files. Seaside can serve these files in a couple of ways, however we'll be using the ==FileLibrary== approach. This is a class where each resource served is implemented as a method.
 
 
-To enable this we define a new subclass of WAFileLibrary, named ==RedditFileLibrary== that will have 2 methods: ==mainCss== and ==bgGif==, returning a string and bytes respectively. These are long methods which are not our main focus so we do not list them here. Based on some naming conventions, Seaside will figure out what mime types to use.
+To enable this we define a new subclass of ==WAFileLibrary==, named ==RedditFileLibrary== that will have 2 methods: ==mainCss== and ==bgGif==, returning a string and bytes respectively. These are long methods which are not our main focus so we do not list them here. Based on some naming conventions, Seaside will figure out what mime types to use.
 
 [[[
 RedditFileLibrary >> updateRoot: anHtmlRoot
-    super updateRoot: anHtmlRoot. 
-    anHtmlRoot title: 'Reddit.st'. 
+    super updateRoot: anHtmlRoot.
+    anHtmlRoot title: 'Reddit.st'.
     anHtmlRoot stylesheet url: (RedditFileLibrary urlOf: #mainCss)
 ]]]
 
@@ -633,23 +635,22 @@ By implementing the ==updateRoot:== hook method on ==WAReddit==, we can set our 
 
 [[[
 WAReddit class >> initialize
-   (WAAdmin register: self asApplicationAt: 'reddit') 
-        preferenceAt: #sessionClass put: RedditSession; 
+   (WAAdmin register: self asApplicationAt: 'reddit')
+        preferenceAt: #sessionClass put: RedditSession;
         addLibrary: RedditFileLibrary
 ]]]
 
 
-Finally we register our main component as an application under the handler 'reddit' so its URL will become something like ==http://localhost:8080/reddit==. We also set our custom session class and as well as our file library. We now should have a nicely styled, and working web app.
+Finally we register our main component as an application under the handler 'reddit' so its URL will become something like ==http://localhost:8080/reddit==. Then we tell it to use our custom session class and finally add our file library. We now have a nicely styled, working web app.
 
-@@note As at May/2017, the latest stable version of Seaside in Pharo 6 doesn't yet support the Seaside Control panel, so you may have to start a server from the playgroud by evaluating [[[ZnZincServerAdaptor startOn: 8080.]]] and then navigating to localhost:8080 in your browser.
+@@note As at May/2017, the latest stable version of Seaside in Pharo 6 doesn't yet support the Seaside Control panel, so you may have to start a server from the playgroud by evaluating [[[ZnZincServerAdaptor startOn: 8080.]]] and then navigating to localhost:8080 in your browsers.
 
 !! WARedditLinkEditor
 
 One of Seaside's main advantages over other web application frameworks is its support for components. Especially for large and complex projects this makes a huge difference. We'll be introducing a new component to allow the user to enter the necessary information when adding a new link. Consider the difference between Figure 1 and Figure 2: when the user clicks the =='New Link'== anchor, we'll add an editor just below (while hiding the =='New Link'== anchor). The editor will have its own 'Save' and 'Cancel' buttons. Both of these will dismiss the editor, saving or cancelling the new link.
 
 
-redditNewLink
-+Reddit>file://figures/redditNewLink.png|width=50|label=redditNew+
++Editing a link>file://figures/redditNewLink.png|width=50|label=redditNew+
 
 
 How is Seaside's component model powerful? As we will see next, the component is written without any knowledge of where it will be used. Its validation logic is independent. It is used just by embedding it and by wiring it to its user in a simple way. The subcomponent functions independently from its embedding parent while each keeps its own state: whether the component is visible or not, you can keep on voting links up or down, and doing so will not alter the contents of the component.
@@ -661,20 +662,20 @@ The first step is to make the necessary additions and modifications to ==WAReddi
 
 [[[
 WAReddit >> renderContentOn: html
-     html heading: 'Reddit.st'. 
-     html heading level: 3; with: 'In 10 elegant Smalltalk classes'. 
-     self renderActionsOn: html. 
+     html heading: 'Reddit.st'.
+     html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
+     self renderActionsOn: html.
      self linkEditor notNil
         ifTrue: [ html render: self linkEditor ].
-     self renderHighestRankingLinksOn: html. 
+     self renderHighestRankingLinksOn: html.
      self renderLatestLinksOn: html
 ]]]
 
 
 [[[
 WAReddit >> renderActionsOn: html
-     html paragraph: [ 
-     	html anchor callback: [ ]; with: 'Refresh'. 
+     html paragraph: [
+     	html anchor callback: [ ]; with: 'Refresh'.
      	self linkEditor isNil ifTrue: [
      	html anchor callback: [ self showNewLinkEditor ]; with: 'New Link' ] ]
 ]]]
@@ -682,11 +683,11 @@ WAReddit >> renderActionsOn: html
 
 [[[
 WAReddit >> showNewLinkEditor
-     self linkEditor: WARedditLinkEditor new. 
+     self linkEditor: WARedditLinkEditor new.
      self linkEditor onAnswer: [ :answer |
-          answer ifTrue: [ 
+          answer ifTrue: [
                self session glorpSession inUnitOfWorkDo: [ :session |
-                    session register: self linkEditor createLink ] ]. 
+                    session register: self linkEditor createLink ] ].
           self linkEditor: nil ]
 ]]]
 
@@ -694,8 +695,8 @@ When saving this method in Pharo, you will be offered the option to automaticall
 
 [[[
 WAReddit >> children
-    ^ self linkEditor notNil 
-        ifTrue: [ Array with: self linkEditor ] 
+    ^ self linkEditor notNil
+        ifTrue: [ Array with: self linkEditor ]
         ifFalse: [ super children ]
 ]]]
 
@@ -712,20 +713,20 @@ We can now implement the component itself: ==WARedditLinkEditor== is a subclass 
 [[[
 WARedditLinkEditor >> renderContentOn: html
 	html form: [
-		html paragraph: 'Please enter a URL and title for the link that you want to add:'. 
-		html textInput size: 48; title: 'The URL of the new link'; on: #url of: self. 
-		html textInput size: 48; title: 'The title of the new link'; on: #title of: self. 
+		html paragraph: 'Please enter a URL and title for the link that you want to add:'.
+		html textInput size: 48; title: 'The URL of the new link'; on: #url of: self.
+		html textInput size: 48; title: 'The title of the new link'; on: #title of: self.
 		html render: self captcha.
-		html submitButton on: #cancel of: self. 
+		html submitButton on: #cancel of: self.
 		html submitButton on: #save of: self ]
 ]]]
 
 
 [[[
 WARedditLinkEditor >> initialize
-	super initialize. 
-	self url: 'http://'; 
-		title: 'title'; 
+	super initialize.
+	self url: 'http://';
+		title: 'title';
 		captcha: WARedditCaptcha new
 ]]]
 
@@ -738,8 +739,8 @@ WARedditLinkEditor >> children
 
 [[[
 WARedditLinkEditor >> updateRoot: anHtmlRoot
-	super updateRoot: anHtmlRoot. 
-	anHtmlRoot title: 'Reddit.st - Submit a new link'. 
+	super updateRoot: anHtmlRoot.
+	anHtmlRoot title: 'Reddit.st - Submit a new link'.
 	anHtmlRoot stylesheet url: (RedditFileLibrary urlOf: #mainCss)
 ]]]
 
@@ -751,10 +752,10 @@ WARedditLinkEditor >> cancel
 
 [[[
 WARedditLinkEditor >> save
-	self isUrlMissing ifTrue: [ ^ self inform: 'Please enter an URL' ]. 
-	self isTitleMissing ifTrue: [ ^ self inform: 'Please enter a title' ]. 
-	self captcha isSolved ifFalse: [ ^ self inform: 'Please answer the correct sum using digits' ]. 
-	self isUrlValid ifFalse: [ ^ self inform: 'The URL you entered did not resolve' ]. 
+	self isUrlMissing ifTrue: [ ^ self inform: 'Please enter an URL' ].
+	self isTitleMissing ifTrue: [ ^ self inform: 'Please enter a title' ].
+	self captcha isSolved ifFalse: [ ^ self inform: 'Please answer the correct sum using digits' ].
+	self isUrlValid ifFalse: [ ^ self inform: 'The URL you entered did not resolve' ].
 	self answer: true
 ]]]
 
@@ -789,18 +790,18 @@ The last and simplest web component is a CAPTCHA that presents a simple addition
 
 [[[
 WARedditCaptcha >> renderContentOn: html
-	self x: 10 atRandom. 
-	self y: 10 atRandom. 
-	html paragraph: 'CAPTCHA: How much is ', 
-		self x asWords, ' plus ', self y asWords, ' ?'. 
-	html textInput 
-		title: 'This functions as a CAPTCHA, type the answer using digits'; 
+	self x: 10 atRandom.
+	self y: 10 atRandom.
+	html paragraph: 'CAPTCHA: How much is ',
+		self x asWords, ' plus ', self y asWords, ' ?'.
+	html textInput
+		title: 'This functions as a CAPTCHA, type the answer using digits';
 		on: #sum of: self
 ]]]
 
 [[[
 WARedditCaptcha >> initialize
-	super initialize. 
+	super initialize.
 	self x: 0; y: 0; sum: 0
 ]]]
 
@@ -813,11 +814,10 @@ Each time the CAPTCHA is rendered, ==x== and ==y== get a new random value betwee
 
 !! Conclusion
 
-The source code discussed in this chapter is available in the  by typing 'Reddit'.
-
 Measuring the quality of the design is often a challenge, however we believe that having classes with clear responsibilities is an essential driver for great code. This is what we have applied when designing this little application. Reddit.st consists of 10 classes with a total of 8 class methods and 75 instance methods. More than half are just one (1) line long, and the rest average just a few lines.
 
 !!! Appendix
+
 The source code discussed in this article is available in the Pharo Catalog Browser or from the *SmalltalkHub>http://smalltalkhub.com/#!/~SvenVanCaekenberghe/Reddit* in a project called Reddit. It was written for Pharo 3.0. You should load the code using its Metacello configuration, because Seaside and Glorp are prerequisites that also have to be loaded. Note: these are both heavy packages that can take a while to load and compile.
 
 [[[
