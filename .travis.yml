@@ -4,7 +4,7 @@ services:
 before_install:
 - docker pull dpollet/texlive:pillar
 script:
-- docker run --tty --rm --volume $PWD:/work dpollet/texlive:pillar make spiralbook
+- docker run --tty --rm --volume $PWD:/work dpollet/texlive:pillar make book
 deploy:
   provider: releases
   api_key:
@@ -12,3 +12,4 @@ deploy:
   file: build/book.pdf
   on:
     repo: SquareBracketAssociates/Booklet-Reddit
+
