@@ -1,4 +1,4 @@
-MAIN = book
+MAIN = reddit
 CHAPTERS = \
 	Chapters/Reddit/Reddit
 
