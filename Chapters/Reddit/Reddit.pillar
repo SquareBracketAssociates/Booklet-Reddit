@@ -1,34 +1,32 @@
-!! Reddit.st -- in 10 Cool Pharo Classes
+!! Reddit.st -- In 10 Cool Pharo Classes
 
 
-CRUD is an acronym for the Create, Read, Update and Delete operations
-in a persistent storage system, with the term "CRUD application"
-normally associated with a quick application that can manage simple
-data. CRUD development is often linked to scripting languages like
-PHP, however in this booklet we will show that Pharo is also a great
-choice, with the added advantage that it allows your CRUD application
-to organically evolve (something that is often problematic when using
-more traditional programming languages). We will demonstrate that you
-you can write nice looking web applications extremely quickly in Pharo
-and this sample, Reddit.st, also adds persistency in a relational
-database, unit testing, as well as web application components to the
-mix.
+Writing a complete web application requires a web stack, a collection
+of tools and frameworks to tackle the different aspects involved.
+You will need a high productivity language and environment, a web
+application framework and a persistency solution. 
+
+
+We will demonstrate that you can write nice looking web apps 
+extremely quickly in Pharo and this sample, Reddit.st, also adds 
+persistency in a relational database, unit testing, 
+as well as reusable web application components to the mix.
+
+
+Reddit.st is a simplified version of Reddit,
+*http://www.reddit.com*, a web application where users can post
+interesting links that get voted up or down. 
+The idea is that the 'best' links end up with the most points
+automatically. Other websites like Delicious, Digg and
+Hacker News also exist in this area of social bookmarking, so
+it's an interesting domain to explore.
 
 
 Technically speaking, we will show how to implement a small but
 non-trivial web application in Pharo *http://www.pharo.org* using
 Seaside *http://seaside.st*, Glorp *http://glorp.org* (an ORM) and
-PostgreSQL *http://www.postgresql.org*.  The appendix also explains
-how to get the source code discussed in this article.
-
-
-To give some context to our journey, we will base our example on
-Reddit, *http://www.reddit.com*, a web application where users can
-post interesting links that get voted up or down as an example
-domain. The idea is that the 'best' links end up with the most points
-automatically. There are other websites like Delicious, Digg and
-Hacker News that also exist in this area of social bookmarking, so
-it's an interesting domain to explore.
+PostgreSQL *http://www.postgresql.org* (an RDBMS).  
+The appendix explains how to get the source code discussed in this article.
 
 
 The 10 main sections of this booklet follow the development of the 10
@@ -36,7 +34,10 @@ classes making up the application. The focus of the Pharo version is
 less about the small size of the application or the high developer
 productivity, but more on the fact that we can cover so much ground
 using powerful frameworks, as well as the natural development flow
-from model to tests and persistence to web GUI. Please note however,
+from model to tests and persistence to web GUI. 
+
+
+Please note however,
 this booklet is not intended to act as a comprehensive tutorial for
 developing the full application. You may need to refer to other
 documentation if you get stuck or want to explore other related topics
@@ -49,14 +50,14 @@ understanding of relational databases and/or SQL.
 
 
 Finally, before jumping in, the material included in this booklet was
-originally written by Sven Van Caekenberghe and published at:
-*https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740*. We
-thank him for his permission to use this work, and to create this
-booklet.
+originally written in 2014 by Sven Van Caekenberghe and published at:
+*https://medium.com/@svenvc/reddit-st-in-10-cool-pharo-classes-1b5327ca0740*. 
+We thank him for his permission to use this work, 
+and to create this booklet.
 
 
 
-!! First RedditLink: a Model
+!! RedditLink, our Model
 
 
 The central object of our application is ==RedditLink==, representing
@@ -85,7 +86,7 @@ methods.
 
 
 
-!!!! Initialization and more
+!!! Initialization and more
 
 
 [[[
@@ -146,7 +147,7 @@ instance of the resulting object as shown in Figure *@redditModel1*.
 
 
 
-!!!! Example support 
+!!! Example support 
 
 
 To allow us to conveniently run our application
@@ -164,7 +165,7 @@ RedditLink class >> pharoDotOrg
 
 
 
-!!!! Voting support
+!!! Voting support
 
 
 Apart from creating and displaying ==RedditLink== instances, users
@@ -189,7 +190,7 @@ ready to make instances and use them.
 
 
 
-!! RedditLinkTests
+!! RedditLinkTests, Unit tests for our model
 
 
 Unit tests are very important, less so in small examples like this
@@ -201,7 +202,7 @@ write a unit test, particularly when Pharo makes this very easy.
 
 
 
-!!!! TestCase creation
+!!! TestCase creation
 
 
 We first create the class ==RedditLinkTests== as a subclass of
@@ -251,7 +252,7 @@ RedditLink >> validate
 
 
 
-!!!! Tests
+!!! Tests
 
 
 Now we can take advantage of these methods in our tests.
@@ -364,7 +365,7 @@ and execute the command ==brew install postgresql== to install Postgres.
 
 
 
-!!! Intermezzo: Installing Glorp
+!!! Installing Glorp
 
 
 To access your database from Pharo, you will also need to install some
@@ -410,7 +411,7 @@ style descriptors.
 
 
 
-!!!! Defining A Schema
+!!! Defining a schema
 
 
 First we define a new class description named
@@ -446,7 +447,7 @@ RedditSchemaDescriptor >> classModelForRedditLink: aClassModel
 
 
 
-!!!! Tables
+!!! Tables
 
 
 The second step in our mapping is to describe which tables are
@@ -473,6 +474,10 @@ RedditSchemaDescriptor >> tableForREDDIT_LINKS: aTable
 ]]]
 
 
+
+!!! Mapping
+
+
 The third and final step is the actual descriptor describing the
 mapping between the class model ==RedditLink== and the table
 ==REDDIT_LINKS==. In this case, direct mappings are used between
@@ -494,7 +499,7 @@ RedditSchemaDescriptor >> descriptorForRedditLink: aDescriptor
 
 
 
-!! Connecting to the Database
+!! RedditDatabaseResource, Connecting to the database
 
 
 At this point we will assume that you have correctly installed and
@@ -503,7 +508,7 @@ database.
 
 
 
-!!!! Creation a database resource
+!!! Creation a database resource
 
 
 We now have to specify how Glorp can connect to PostgreSQL, and we do
@@ -553,7 +558,7 @@ underscore), that you configured when installing Postgres earlier on.
 
 
 
-!!!! Using Session
+!!! Database sessions
 
 
 Glorp accesses a database through sessions. A session is easily
@@ -595,7 +600,7 @@ console).
 
 
 
-!! Time to test: RedditDatabaseTest
+!! RedditDatabaseTest, Unit tests for persistency
 
 
 With our ==RedditSchemaDescriptor== system and our
@@ -697,10 +702,7 @@ all pass with a green dot.
 
 
 
-!! RedditSession
-
-
-!!! Intermezzo Due: Installing Seaside
+!! Intermezzo: Installing Seaside
 
 
 To build a web application, Pharo supports a framework called Seaside,
@@ -715,6 +717,10 @@ Metacello new
     version: #stable;
     load
 ]]]
+
+
+
+!! RedditSession, Managing web app user state
 
 
 We are now almost ready to start writing the GUI of our actual web
@@ -775,7 +781,7 @@ RedditSession >> teardownGlorpSession
 
 
 
-!! Web Part: RedditWebApp
+!! RedditWebApp, Central component of our Web GUI
 
 
 We can finally start with our web app itself. Figure 1 shows the main
@@ -786,6 +792,9 @@ recent links.
 
 
 +The main page of Reddit.st>file://figures/redditOne.png|width=50|label=redditOne+
+
+
+!!! Creating and rendering a component
 
 
 We create a ==WAComponent== subclass called ==RedditWebApp==. This will
@@ -856,7 +865,7 @@ each section is delegated to its own method. Note how
 
 
 
-!!!! Rendering Links
+!!! Rendering links
 
 
 For now, we're not yet implementing the 'New Link' action. Our
@@ -910,6 +919,10 @@ however since we haven't yet added any CSS styling, the result looks
 rather dull.
 
 
+
+!!! Web actions
+
+
 [[[
 RedditWebApp >> voteDown: link
     self session glorpSession
@@ -935,7 +948,7 @@ automatically.
 
 
 
-!! RedditFileLibrary
+!! RedditFileLibrary, Managing web app resources
 
 
 To style our web app, we'll be reusing the CSS file from
@@ -1001,7 +1014,7 @@ also start a server from the playgroud by evaluating
 
 
 
-!! RedditLinkEditor
+!! RedditLinkEditor, A component to edit links
 
 
 One of Seaside's main advantages over other web application frameworks
@@ -1199,12 +1212,15 @@ user. Note how the CAPTCHA is used as a true component.
 
 
 
-!! RedditCaptcha: A last Web Component
+!! RedditCaptcha: A component to protect against robots
 
 
-The last and simplest web component is a CAPTCHA that presents a
-simple addition in words. This component does not need answer
-logic. The class ==RedditCaptcha== is again a subclass of
+The last and simplest web component is a CAPTCHA.
+This is tool to prevent robots from attacking your web app with malicious data entry.
+RedditCaptcha that presents a simple addition in words.
+The idea is that humans can easily pass this test while robots won't understand the question. 
+This component does not need answer logic. 
+The class ==RedditCaptcha== is again a subclass of
 ==WAComponent== with the following instance variables and accessors:
 ==x==, ==y==, and ==sum==.
 
@@ -1259,7 +1275,7 @@ in making it a better place to live in a world of code.
 
 
 
-!!! Appendix
+!! Appendix
 
 
 The source code discussed in this article is available in the Pharo
