@@ -422,7 +422,7 @@ Glorp to work with.
 DescriptorSystem subclass: #RedditSchemaDescriptor
     instanceVariableNames: ''
     classVariableNames: ''
-    package: 'Reddit-DB'
+    package: 'Reddit'
 ]]]
 
 
@@ -514,7 +514,7 @@ this by creating a new class named ==RedditDatabaseResource==.
 Object subclass: #RedditDatabaseResource
     instanceVariableNames: ''
     classVariableNames: 'DefaultLogin'
-    package: 'Reddit-DB'
+    package: 'Reddit'
 ]]]
 
 
@@ -610,7 +610,7 @@ session, as well as ==setUp== and ==teardown== methods.
 TestCase subclass: #RedditDatabaseTests
     instanceVariableNames: 'session'
     classVariableNames: ''
-    package: 'Reddit-DB'
+    package: 'Reddit'
 ]]]
 
 
@@ -775,7 +775,7 @@ RedditSession >> teardownGlorpSession
 
 
 
-!! Web Part: the WAReddit Component
+!! Web Part: RedditWebApp
 
 
 We can finally start with our web app itself. Figure 1 shows the main
@@ -788,13 +788,13 @@ recent links.
 +The main page of Reddit.st>file://figures/redditOne.png|width=50|label=redditOne+
 
 
-We create a ==WAComponent== subclass called ==WAReddit==. This will
+We create a ==WAComponent== subclass called ==RedditWebApp==. This will
 become our central or root web app component. We start by writing the
 rendering methods.
 
 
 [[[
-WAComponent subclass: #WAReddit
+WAComponent subclass: #RedditWebApp
     instanceVariableNames: ''
     classVariableNames: ''
     package: 'Reddit'
@@ -802,7 +802,7 @@ WAComponent subclass: #WAReddit
 
 
 [[[
-WAReddit >> renderContentOn: html
+RedditWebApp >> renderContentOn: html
     html heading: 'Reddit.st'.
     html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
     self renderActionsOn: html.
@@ -812,14 +812,14 @@ WAReddit >> renderContentOn: html
 
 
 [[[
-WAReddit >> renderActionsOn: html
+RedditWebApp >> renderActionsOn: html
     html paragraph: [ html anchor callback: [ ]; with: 'Refresh'.
     html anchor callback: [ self inform: 'Not yet implemented' ]; with: 'New Link' ]
 ]]]
 
 
 [[[
-WAReddit >> renderHighestRankingLinksOn: html
+RedditWebApp >> renderHighestRankingLinksOn: html
     html heading level: 2; with: 'Highest Ranking Links'.
     html orderedList: [
         self highestRankingLinks do: [ :each | self renderLink: each on: html ] ]
@@ -827,7 +827,7 @@ WAReddit >> renderHighestRankingLinksOn: html
 
 
 [[[
-WAReddit >> renderLatestLinksOn: html
+RedditWebApp >> renderLatestLinksOn: html
     html heading level: 2; with: 'Latest Links'.
     html orderedList: [
          self latestLinks do: [ :each | self renderLink: each on: html ] ]
@@ -835,7 +835,7 @@ WAReddit >> renderLatestLinksOn: html
 
 
 [[[
-WAReddit >> renderLink: link on: html
+RedditWebApp >> renderLink: link on: html
     html listItem: [ html anchor url: link url; title: link url; with: link title.
     html text: ' Posted ', (self durationString: link age), ' ago. '.
     html text: link points asString, ' points. '.
@@ -856,7 +856,7 @@ each section is delegated to its own method. Note how
 
 
 
-!!!! Rendering Link
+!!!! Rendering Links
 
 
 For now, we're not yet implementing the 'New Link' action. Our
@@ -867,7 +867,7 @@ to render the page itself.
 
 
 [[[
-WAReddit >> highestRankingLinks
+RedditWebApp >> highestRankingLinks
     | query |
     query := (Query read: RedditLink)
         orderBy: [ :each | each points descending ];
@@ -877,7 +877,7 @@ WAReddit >> highestRankingLinks
 
 
 [[[
-WAReddit >> latestLinks
+RedditWebApp >> latestLinks
     | query |
     query := (Query read: RedditLink)
         orderBy: [ :each | each created descending ];
@@ -887,7 +887,7 @@ WAReddit >> latestLinks
 
 
 [[[
-WAReddit >> durationString: duration
+RedditWebApp >> durationString: duration
     ^ String streamContents: [ :stream |
         | needSpace printer |
         needSpace := false.
@@ -911,7 +911,7 @@ rather dull.
 
 
 [[[
-WAReddit >> voteDown: link
+RedditWebApp >> voteDown: link
     self session glorpSession
         inUnitOfWorkDo: [ :session | 
             session register: link.
@@ -920,7 +920,7 @@ WAReddit >> voteDown: link
 
 
 [[[
-WAReddit >> voteUp: link
+RedditWebApp >> voteUp: link
     self session glorpSession
         inUnitOfWorkDo: [ :session |
             session register: link.
@@ -972,14 +972,14 @@ RedditFileLibrary >> updateRoot: anHtmlRoot
 ]]]
 
 
-By implementing the ==updateRoot:== hook method on ==WAReddit==, we
+By implementing the ==updateRoot:== hook method on ==RedditWebApp==, we
 can set our page title and CSS. Note again how everything happens in
 Smalltalk. To install a Seaside application, a ""class"" side
 ==initialize== method is typically used.
 
 
 [[[
-WAReddit class >> initialize
+RedditWebApp class >> initialize
     (WAAdmin register: self asApplicationAt: 'reddit')
         preferenceAt: #sessionClass put: RedditSession;
         addLibrary: RedditFileLibrary
@@ -1001,7 +1001,7 @@ also start a server from the playgroud by evaluating
 
 
 
-!! WARedditLinkEditor
+!! RedditLinkEditor
 
 
 One of Seaside's main advantages over other web application frameworks
@@ -1034,12 +1034,12 @@ the final section, but used here as a black box.
 
 
 The first step is to make the necessary additions and modifications to
-==WAReddit== to accommodate the link editor component. We add an
+==RedditWebApp== to accommodate the link editor component. We add an
 instance variable called ==linkEditor== with its accessors.
 
 
 [[[
-WAReddit >> renderContentOn: html
+RedditWebApp >> renderContentOn: html
     html heading: 'Reddit.st'.
     html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
     self renderActionsOn: html.
@@ -1051,7 +1051,7 @@ WAReddit >> renderContentOn: html
 
 
 [[[
-WAReddit >> renderActionsOn: html
+RedditWebApp >> renderActionsOn: html
     html paragraph: [
         html anchor callback: [ ]; with: 'Refresh'.
         self linkEditor isNil ifTrue: [
@@ -1060,8 +1060,8 @@ WAReddit >> renderActionsOn: html
 
 
 [[[
-WAReddit >> showNewLinkEditor
-    self linkEditor: WARedditLinkEditor new.
+RedditWebApp >> showNewLinkEditor
+    self linkEditor: RedditLinkEditor new.
     self linkEditor onAnswer: [ :answer |
         answer ifTrue: [
             self session glorpSession inUnitOfWorkDo: [ :session |
@@ -1071,12 +1071,12 @@ WAReddit >> showNewLinkEditor
 
 
 When saving this method in Pharo, you will be offered the option to
-automatically create the ==WARedditLinkEditor==, you can do this and
+automatically create the ==RedditLinkEditor==, you can do this and
 make it a subclass of ==WAComponent==.
 
 
 [[[
-WAReddit >> children
+RedditWebApp >> children
     ^ self linkEditor notNil
         ifTrue: [ Array with: self linkEditor ]
         ifFalse: [ super children ]
@@ -1103,13 +1103,13 @@ implemented to list all subcomponents. Again this happens
 conditionally.
 
 
-We can now implement the component itself: ==WARedditLinkEditor== is a
+We can now implement the component itself: ==RedditLinkEditor== is a
 subclass of ==WAComponent== and needs 3 instances variables with their
 accessors: ==url==, ==title== and ==captcha==.
 
 
 [[[
-WARedditLinkEditor >> renderContentOn: html
+RedditLinkEditor >> renderContentOn: html
     html form: [
         html paragraph: 'Please enter a URL and title for the link that you want to add:'.
         html textInput size: 48; title: 'The URL of the new link'; on: #url of: self.
@@ -1121,12 +1121,12 @@ WARedditLinkEditor >> renderContentOn: html
 
 
 [[[
-WARedditLinkEditor >> initialize
+RedditLinkEditor >> initialize
     super initialize.
     self 
          url: 'http://';
          title: 'title';
-         captcha: WARedditCaptcha new
+         captcha: RedditCaptcha new
 ]]]
 
 
@@ -1135,13 +1135,13 @@ as a subclass of ==WAComponent==
 
 
 [[[
-WARedditLinkEditor >> children
+RedditLinkEditor >> children
     ^ Array with: self captcha
 ]]]
 
 
 [[[
-WARedditLinkEditor >> updateRoot: anHtmlRoot
+RedditLinkEditor >> updateRoot: anHtmlRoot
     super updateRoot: anHtmlRoot.
     anHtmlRoot title: 'Reddit.st - Submit a new link'.
     anHtmlRoot stylesheet url: (RedditFileLibrary urlOf: #mainCss)
@@ -1149,13 +1149,13 @@ WARedditLinkEditor >> updateRoot: anHtmlRoot
 
 
 [[[
-WARedditLinkEditor >> cancel
+RedditLinkEditor >> cancel
     self answer: false
 ]]]
 
 
 [[[
-WARedditLinkEditor >> save
+RedditLinkEditor >> save
     self isUrlMissing ifTrue: [ ^ self inform: 'Please enter an URL' ].
     self isTitleMissing ifTrue: [ ^ self inform: 'Please enter a title' ].
     self captcha isSolved ifFalse: [ ^ self inform: 'Please answer the correct sum using digits' ].
@@ -1165,25 +1165,25 @@ WARedditLinkEditor >> save
 
 
 [[[
-WARedditLinkEditor >> isTitleMissing
+RedditLinkEditor >> isTitleMissing
     ^ self title isNil or: [ self title isEmpty or: [ self title = 'title' ] ]
 ]]]
 
 
 [[[
-WARedditLinkEditor >> isUrlMissing
+RedditLinkEditor >> isUrlMissing
     ^ self url isNil or: [ self url isEmpty or: [ self url = 'http://' ] ]
 ]]]
 
 
 [[[
-WARedditLinkEditor >> isUrlValid
+RedditLinkEditor >> isUrlValid
     ^ [ZnClient new get: self url; isSuccess] on: Error do: [ false ].
 ]]]
 
 
 [[[
-WARedditLinkEditor >> createLink
+RedditLinkEditor >> createLink
     ^ RedditLink withUrl: self url title: self title
 ]]]
 
@@ -1199,18 +1199,18 @@ user. Note how the CAPTCHA is used as a true component.
 
 
 
-!! WARedditCaptcha: A last Web Component
+!! RedditCaptcha: A last Web Component
 
 
 The last and simplest web component is a CAPTCHA that presents a
 simple addition in words. This component does not need answer
-logic. The class ==WARedditCaptcha== is again a subclass of
+logic. The class ==RedditCaptcha== is again a subclass of
 ==WAComponent== with the following instance variables and accessors:
 ==x==, ==y==, and ==sum==.
 
 
 [[[
-WARedditCaptcha >> renderContentOn: html
+RedditCaptcha >> renderContentOn: html
     self x: 10 atRandom.
     self y: 10 atRandom.
     html paragraph: 'CAPTCHA: How much is ',
@@ -1222,14 +1222,14 @@ WARedditCaptcha >> renderContentOn: html
 
 
 [[[
-WARedditCaptcha >> initialize
+RedditCaptcha >> initialize
     super initialize.
     self x: 0; y: 0; sum: 0
 ]]]
 
 
 [[[
-WARedditCaptcha >> isSolved
+RedditCaptcha >> isSolved
     ^ self sum asInteger = (self x + self y)
 ]]]
 
