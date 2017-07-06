@@ -72,9 +72,9 @@ like this:
 
 [[[
 Object subclass: #RedditLink
-   instanceVariableNames: 'id url title created points'
-   classVariableNames: ''
-   package: 'Reddit'
+    instanceVariableNames: 'id url title created points'
+    classVariableNames: ''
+    package: 'Reddit'
 ]]]
 
 
@@ -90,9 +90,9 @@ methods.
 
 [[[
 RedditLink >> initialize
-	self
-		points: 0;
-		created: DateAndTime now
+    self
+        points: 0;
+        created: DateAndTime now
 ]]]
 
 
@@ -125,10 +125,10 @@ our object, we also add a class method called ==withUrl:title:==.
 
 [[[
 RedditLink class >> withUrl: url title: title
-  ^ self new
-      url: url;
-      title: title;
-      yourself
+    ^ self new
+        url: url;
+        title: title;
+        yourself
 ]]]
 
 
@@ -158,8 +158,8 @@ object.
 
 [[[
 RedditLink class >> pharoDotOrg
-	<sampleInstance>
-	^ self withUrl: 'http://pharo.org' title: 'pharo'
+     <sampleInstance>
+     ^ self withUrl: 'http://pharo.org' title: 'pharo'
 ]]]
 
 
@@ -210,9 +210,9 @@ We first create the class ==RedditLinkTests== as a subclass of
 
 [[[
 TestCase subclass: #RedditLinkTests
-	instanceVariableNames: ''
-	classVariableNames: ''
-	package: 'Reddit'
+    instanceVariableNames: ''
+    classVariableNames: ''
+    package: 'Reddit'
 ]]]
 
 
@@ -235,12 +235,12 @@ available on any object.
 
 [[[
 RedditLink >> assertContractUsing: object
-   object assert: (self url isNil or: [ self url isString ]).
-   object assert: (self title isNil or: [ self title isString ]).
-   object assert: (self created isKindOf: DateAndTime).
-   object assert: (self points isKindOf: Integer).
-   object assert: self age asSeconds >= 0.
-   object assert: self printString isString
+    object assert: (self url isNil or: [ self url isString ]).
+    object assert: (self title isNil or: [ self title isString ]).
+    object assert: (self created isKindOf: DateAndTime).
+    object assert: (self points isKindOf: Integer).
+    object assert: self age asSeconds >= 0.
+    object assert: self printString isString
 ]]]
 
 
@@ -259,38 +259,38 @@ Now we can take advantage of these methods in our tests.
 
 [[[
 RedditLinkTests >> testInitialState
-	| link |
-	link := RedditLink new.
-	link assertContractUsing: self.
-	self assert: link points isZero
+    | link |
+    link := RedditLink new.
+    link assertContractUsing: self.
+    self assert: link points isZero
 ]]]
 
 
 [[[
 RedditLinkTests >> testCreate
-	| link url title |
-	url := 'http://www.seaside.st'.
-	title := 'Seaside'.
-	link := RedditLink withUrl: url title: title.
-	link assertContractUsing: self.
-	self assert: link points isZero.
-	self assert: link url equals: url.
-	self assert: link title equals: title
+    | link url title |
+    url := 'http://www.seaside.st'.
+    title := 'Seaside'.
+    link := RedditLink withUrl: url title: title.
+    link assertContractUsing: self.
+    self assert: link points isZero.
+    self assert: link url equals: url.
+    self assert: link title equals: title
 ]]]
 
 
 [[[
 RedditLinkTests >> testVoting
-	| link |
-	link := RedditLink new.
-	link assertContractUsing: self.
-	self assert: link points isZero.
-	link voteUp.
-	self assert: link points equals: 1.
-	link voteDown.
-	self assert: link points isZero.
-	link voteDown.
-	self assert: link points isZero
+    | link |
+    link := RedditLink new.
+    link assertContractUsing: self.
+    self assert: link points isZero.
+    link voteUp.
+    self assert: link points equals: 1.
+    link voteDown.
+    self assert: link points isZero.
+    link voteDown.
+    self assert: link points isZero
 ]]]
 
 
@@ -373,10 +373,10 @@ database access libraries, by evaluating the following in a workspace:
 
 [[[
 Metacello new
-	smalltalkhubUser: 'DBXTalk' project: 'Garage';
-	configuration: 'GarageGlorp';
-	version: #stable;
-	load.
+    smalltalkhubUser: 'DBXTalk' project: 'Garage';
+    configuration: 'GarageGlorp';
+    version: #stable;
+    load.
 ]]]
 
 
@@ -420,9 +420,9 @@ Glorp to work with.
 
 [[[
 DescriptorSystem subclass: #RedditSchemaDescriptor
-   instanceVariableNames: ''
-   classVariableNames: ''
-   package: 'Reddit-DB'
+    instanceVariableNames: ''
+    classVariableNames: ''
+    package: 'Reddit-DB'
 ]]]
 
 
@@ -436,7 +436,10 @@ used to glue things together.
 [[[
 RedditSchemaDescriptor >> constructAllClasses
     ^ super constructAllClasses add: RedditLink; yourself
+]]]
 
+
+[[[
 RedditSchemaDescriptor >> classModelForRedditLink: aClassModel
     #(id url title created points) do: [ :each | aClassModel newAttributeNamed: each ]
 ]]]
@@ -456,17 +459,17 @@ being used.
 
 [[[
 RedditSchemaDescriptor >> allTableNames
-     ^ #( 'REDDIT_LINKS' )
+    ^ #( 'REDDIT_LINKS' )
 ]]]
 
 
 [[[
 RedditSchemaDescriptor >> tableForREDDIT_LINKS: aTable
-     (aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey.
-     aTable createFieldNamed: 'url' type: (platform varchar: 64).
-     aTable createFieldNamed: 'title' type: (platform varchar: 64).
-     aTable createFieldNamed: 'created' type: platform timestamp.
-     aTable createFieldNamed: 'points' type: platform integer
+    (aTable createFieldNamed: 'id' type: platform serial) bePrimaryKey.
+    aTable createFieldNamed: 'url' type: (platform varchar: 64).
+    aTable createFieldNamed: 'title' type: (platform varchar: 64).
+    aTable createFieldNamed: 'created' type: platform timestamp.
+    aTable createFieldNamed: 'points' type: platform integer
 ]]]
 
 
@@ -479,14 +482,14 @@ is now configured to do its job.
 
 [[[
 RedditSchemaDescriptor >> descriptorForRedditLink: aDescriptor
-     | table |
-     table := self tableNamed: 'REDDIT_LINKS'.
-     aDescriptor table: table.
-     (aDescriptor newMapping: DirectMapping) from: #id to: (table fieldNamed: 'id').
-     (aDescriptor newMapping: DirectMapping) from: #url to: (table fieldNamed: 'url').
-     (aDescriptor newMapping: DirectMapping) from: #title to: (table fieldNamed: 'title').
-     (aDescriptor newMapping: DirectMapping) from: #created to: (table fieldNamed: 'created').
-     (aDescriptor newMapping: DirectMapping) from: #points to: (table fieldNamed: 'points')
+    | table |
+    table := self tableNamed: 'REDDIT_LINKS'.
+    aDescriptor table: table.
+    (aDescriptor newMapping: DirectMapping) from: #id to: (table fieldNamed: 'id').
+    (aDescriptor newMapping: DirectMapping) from: #url to: (table fieldNamed: 'url').
+    (aDescriptor newMapping: DirectMapping) from: #title to: (table fieldNamed: 'title').
+    (aDescriptor newMapping: DirectMapping) from: #created to: (table fieldNamed: 'created').
+    (aDescriptor newMapping: DirectMapping) from: #points to: (table fieldNamed: 'points')
 ]]]
 
 
@@ -509,9 +512,9 @@ this by creating a new class named ==RedditDatabaseResource==.
 
 [[[
 Object subclass: #RedditDatabaseResource
-   instanceVariableNames: ''
-   classVariableNames: 'DefaultLogin'
-   package: 'Reddit-DB'
+    instanceVariableNames: ''
+    classVariableNames: 'DefaultLogin'
+    package: 'Reddit-DB'
 ]]]
 
 
@@ -521,26 +524,26 @@ variable called ==DefaultLogin==).
 
 [[[
 RedditDatabaseResource class >> login
-     DefaultLogin ifNil: [ DefaultLogin := self createLogin ].
-     ^ DefaultLogin
+    DefaultLogin ifNil: [ DefaultLogin := self createLogin ].
+    ^ DefaultLogin
 ]]]
 
 
 [[[
 RedditDatabaseResource class >> login: aLogin
-     "see #createLogin for an example of how to create a Login object"
-     DefaultLogin := aLogin
+    "see #createLogin for an example of how to create a Login object"
+    DefaultLogin := aLogin
 ]]]
 
 
 [[[
 RedditDatabaseResource class >> createLogin
-     ^ Login new
-          database: PostgreSQLPlatform new;
-          username: 'svc';
-          password: 'secret';
-          connectString: 'localhost:5432_playground';
-          yourself
+    ^ Login new
+        database: PostgreSQLPlatform new;
+        username: 'svc';
+        password: 'secret';
+        connectString: 'localhost:5432_playground';
+        yourself
 ]]]
 
 
@@ -559,22 +562,22 @@ what we do in the ==session== helper class method.
 
 
 [[[
-RedditDatabaseResource >> session
-     ^ RedditSchemaDescriptor sessionForLogin: self login
+RedditDatabaseResource class >> session
+    ^ RedditSchemaDescriptor sessionForLogin: self login
 ]]]
 
 
 [[[
-RedditDatabaseResource >> create
-<sampleInstance>
-     "This has to be done only once, be sure to set #login"
-     |session |
-     session := self session.
-     session accessor
+RedditDatabaseResource class >> create
+    "This has to be done only once, be sure to set #login"
+
+    |session |
+    session := self session.
+    session accessor
         login;
         logging: true.
-     session inTransactionDo: [ session createTables ].
-     session accessor logout
+    session inTransactionDo: [ session createTables ].
+    session accessor logout
 ]]]
 
 
@@ -605,22 +608,22 @@ session, as well as ==setUp== and ==teardown== methods.
 
 [[[
 TestCase subclass: #RedditDatabaseTests
-   instanceVariableNames: 'session'
-   classVariableNames: ''
-   package: 'Reddit-DB'
+    instanceVariableNames: 'session'
+    classVariableNames: ''
+    package: 'Reddit-DB'
 ]]]
 
 
 [[[
 RedditDatabaseTest >> setUp
-     session := RedditDatabaseResource session.
-     session accessor logging: true; login
+    session := RedditDatabaseResource session.
+    session accessor logging: true; login
 ]]]
 
 
 [[[
 RedditDatabaseTest >> tearDown
-     session accessor logout
+    session accessor logout
 ]]]
 
 
@@ -634,8 +637,8 @@ RedditDatabaseTest >> testQuery
     |links|
     links := session readManyOf: RedditLink.
     links do: [ :each |
-                each assertContractUsing: self.
-                self assert: (each isKindOf: RedditLink) ]
+        each assertContractUsing: self.
+        self assert: (each isKindOf: RedditLink) ]
 ]]]
 
 
@@ -649,19 +652,19 @@ is what we got out, we delete the object.
 
 [[[
 RedditDatabaseTest >> testUpdate
-	| link url title id |
-	url := 'http://www.seaside.st'.
-	title := 'Seaside Unit Test'.
-	link := RedditLink withUrl: url title: title.
-	session inUnitOfWorkDo: [ session register: link ].
-	id := link id.
-	session	inUnitOfWorkDo: [
-	            session register: link.
-	            link voteUp ].
-	session reset.
-	link := session readOneOf: RedditLink where: [ :each | each id = id ].
-	self assert: link points equals: 1.
-	session delete: link
+    | link url title id |
+    url := 'http://www.seaside.st'.
+    title := 'Seaside Unit Test'.
+    link := RedditLink withUrl: url title: title.
+    session inUnitOfWorkDo: [ session register: link ].
+    id := link id.
+    session inUnitOfWorkDo: [
+        session register: link.
+        link voteUp ].
+    session reset.
+    link := session readOneOf: RedditLink where: [ :each | each id = id ].
+    self assert: link points equals: 1.
+    session delete: link
 ]]]
 
  
@@ -673,19 +676,19 @@ picked up by Glorp.
 
 [[[
 RedditDatabaseTest >> testCreate
-     | link url title id |
-     url := 'http://www.seaside.st'.
-     title := 'Seaside Unit Test'.
-     link := RedditLink withUrl: url title: title.
-     session inUnitOfWorkDo: [ session register: link ].
-     id := link id.
-     self assert: id notNil.
-     session reset.
-     link := session readOneOf: RedditLink where: [ :each | each id = id ].
-     link assertContractUsing: self.
-     self assert: link url equals: url.
-     self assert: link title equals: title.
-     session delete: link
+    | link url title id |
+    url := 'http://www.seaside.st'.
+    title := 'Seaside Unit Test'.
+    link := RedditLink withUrl: url title: title.
+    session inUnitOfWorkDo: [ session register: link ].
+    id := link id.
+    self assert: id notNil.
+    session reset.
+    link := session readOneOf: RedditLink where: [ :each | each id = id ].
+    link assertContractUsing: self.
+    self assert: link url equals: url.
+    self assert: link title equals: title.
+    session delete: link
 ]]]
 
 
@@ -707,10 +710,10 @@ content:
 
 [[[
 Metacello new
-  configuration:'Seaside3';
-  repository: 'http://www.smalltalkhub.com/mc/Seaside/MetacelloConfigurations/main';
-  version: #stable;
-  load
+    configuration:'Seaside3';
+    repository: 'http://www.smalltalkhub.com/mc/Seaside/MetacelloConfigurations/main';
+    version: #stable;
+    load
 ]]]
 
 
@@ -725,9 +728,9 @@ this, we define a new class ==RedditSession== as a subclass of
 
 [[[
 WASession subclass: #RedditSession
-   instanceVariableNames: 'glorpSession'
-   classVariableNames: ''
-   package: 'Reddit-DB'
+    instanceVariableNames: 'glorpSession'
+    classVariableNames: ''
+    package: 'Reddit'
 ]]]
 
 
@@ -738,19 +741,19 @@ use of our ==RedditDatabaseResource==.
 
 [[[
 RedditSession >> glorpSession
-   glorpSession ifNil: [ glorpSession := self newGlorpSession ].
-   glorpSession accessor isLoggedIn
-       ifFalse: [ glorpSession accessor login ].
-   ^ glorpSession
+    glorpSession ifNil: [ glorpSession := self newGlorpSession ].
+    glorpSession accessor isLoggedIn
+        ifFalse: [ glorpSession accessor login ].
+    ^ glorpSession
 ]]]
 
 
 [[[
 RedditSession >> newGlorpSession
-     | session |
-     session := RedditDatabaseResource session.
-     "session accessor logging: true."
-     ^ session
+    | session |
+    session := RedditDatabaseResource session.
+    session accessor logging: true.
+    ^ session
 ]]]
 
 
@@ -760,14 +763,14 @@ expires, we use it clean up our Glorp session by doing a log out.
 
 [[[
 RedditSession >> unregistered
-     super unregistered.
-     self teardownGlorpSession
+    super unregistered.
+    self teardownGlorpSession
 ]]]
 
 
 [[[
 RedditSession >> teardownGlorpSession
-     self glorpSession logout
+    self glorpSession logout
 ]]]
 
 
@@ -792,9 +795,9 @@ rendering methods.
 
 [[[
 WAComponent subclass: #WAReddit
-   instanceVariableNames: ''
-   classVariableNames: ''
-   package: 'Reddit-Web'
+    instanceVariableNames: ''
+    classVariableNames: ''
+    package: 'Reddit'
 ]]]
 
 
@@ -819,7 +822,7 @@ WAReddit >> renderActionsOn: html
 WAReddit >> renderHighestRankingLinksOn: html
     html heading level: 2; with: 'Highest Ranking Links'.
     html orderedList: [
-          self highestRankingLinks do: [ :each | self renderLink: each on: html ] ]
+        self highestRankingLinks do: [ :each | self renderLink: each on: html ] ]
 ]]]
 
 
@@ -837,13 +840,13 @@ WAReddit >> renderLink: link on: html
     html text: ' Posted ', (self durationString: link age), ' ago. '.
     html text: link points asString, ' points. '.
     html anchor
-         callback: [ self voteUp: link ];
-         title: 'Vote this link up';
-         with: 'Up'.
+        callback: [ self voteUp: link ];
+        title: 'Vote this link up';
+        with: 'Up'.
     html space.
     html anchor
-         callback: [ self voteDown: link ];
-         title: 'Vote this link down'; with: 'Down' ]
+        callback: [ self voteDown: link ];
+        title: 'Vote this link down'; with: 'Down' ]
 ]]]
 
 
@@ -865,34 +868,34 @@ to render the page itself.
 
 [[[
 WAReddit >> highestRankingLinks
-   | query |
-   query := (Query read: RedditLink)
-              orderBy: [ :each | each points descending ];
-              limit: 20; yourself.
-   ^ self session glorpSession execute: query
+    | query |
+    query := (Query read: RedditLink)
+        orderBy: [ :each | each points descending ];
+        limit: 20; yourself.
+    ^ self session glorpSession execute: query
 ]]]
 
 
 [[[
 WAReddit >> latestLinks
-   | query |
-   query := (Query read: RedditLink)
-              orderBy: [ :each | each created descending];
-              limit: 20; yourself.
+    | query |
+    query := (Query read: RedditLink)
+        orderBy: [ :each | each created descending ];
+        limit: 20; yourself.
    ^ self session glorpSession execute: query
 ]]]
 
 
 [[[
 WAReddit >> durationString: duration
-   ^ String streamContents: [ :stream |
-         | needSpace printer |
-         needSpace := false.
-         printer := [ :value :word |
-                       value isZero ifFalse: [
-                            needSpace ifTrue: [ stream space ].
-                            stream nextPutAll: (value pluralize: word).
-                            needSpace := true ] ].
+    ^ String streamContents: [ :stream |
+        | needSpace printer |
+        needSpace := false.
+        printer := [ :value :word |
+            value isZero ifFalse: [
+                needSpace ifTrue: [ stream space ].
+                stream nextPutAll: (value pluralize: word).
+                needSpace := true ] ].
         printer value: duration days value: 'day'.
         printer value: duration hours value: 'hour'.
         printer value: duration minutes value: 'minute' ]
@@ -910,17 +913,18 @@ rather dull.
 [[[
 WAReddit >> voteDown: link
     self session glorpSession
-       inUnitOfWorkDo: [ :session | session register: link.
-                            link voteDown ]
+        inUnitOfWorkDo: [ :session | 
+            session register: link.
+            link voteDown ]
 ]]]
 
 
 [[[
 WAReddit >> voteUp: link
-   self session glorpSession
-      inUnitOfWorkDo: [ :session |
-           session register: link.
-           link voteUp ]
+    self session glorpSession
+        inUnitOfWorkDo: [ :session |
+            session register: link.
+            link voteUp ]
 ]]]
 
 
@@ -954,9 +958,9 @@ types to use.
 
 [[[
 RedditFileLibrary >> mainCss
-	^ 'h1 {
-  color: #840029;
-}'
+    ^ 'h1 {
+        color: #840029;
+    }'
 ]]]
 
 
@@ -976,7 +980,7 @@ Smalltalk. To install a Seaside application, a ""class"" side
 
 [[[
 WAReddit class >> initialize
-   (WAAdmin register: self asApplicationAt: 'reddit')
+    (WAAdmin register: self asApplicationAt: 'reddit')
         preferenceAt: #sessionClass put: RedditSession;
         addLibrary: RedditFileLibrary
 ]]]
@@ -991,6 +995,8 @@ styled, working web app.
 
 @@note If you have trouble using the Seaside Control panel, so you can
 also start a server from the playgroud by evaluating
+
+
 [[[ZnZincServerAdaptor startOn: 8080.]]]
 
 
@@ -1034,33 +1040,33 @@ instance variable called ==linkEditor== with its accessors.
 
 [[[
 WAReddit >> renderContentOn: html
-     html heading: 'Reddit.st'.
-     html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
-     self renderActionsOn: html.
-     self linkEditor notNil
-        ifTrue: [ html render: self linkEditor ].
-     self renderHighestRankingLinksOn: html.
-     self renderLatestLinksOn: html
+    html heading: 'Reddit.st'.
+    html heading level: 3; with: 'In 10 elegant Smalltalk classes'.
+    self renderActionsOn: html.
+    self linkEditor notNil
+       ifTrue: [ html render: self linkEditor ].
+    self renderHighestRankingLinksOn: html.
+    self renderLatestLinksOn: html
 ]]]
 
 
 [[[
 WAReddit >> renderActionsOn: html
-     html paragraph: [
-     	html anchor callback: [ ]; with: 'Refresh'.
-     	self linkEditor isNil ifTrue: [
-     	html anchor callback: [ self showNewLinkEditor ]; with: 'New Link' ] ]
+    html paragraph: [
+        html anchor callback: [ ]; with: 'Refresh'.
+        self linkEditor isNil ifTrue: [
+        html anchor callback: [ self showNewLinkEditor ]; with: 'New Link' ] ]
 ]]]
 
 
 [[[
 WAReddit >> showNewLinkEditor
-     self linkEditor: WARedditLinkEditor new.
-     self linkEditor onAnswer: [ :answer |
-          answer ifTrue: [
-               self session glorpSession inUnitOfWorkDo: [ :session |
-                    session register: self linkEditor createLink ] ].
-          self linkEditor: nil ]
+    self linkEditor: WARedditLinkEditor new.
+    self linkEditor onAnswer: [ :answer |
+        answer ifTrue: [
+            self session glorpSession inUnitOfWorkDo: [ :session |
+                session register: self linkEditor createLink ] ].
+    self linkEditor: nil ]
 ]]]
 
 
@@ -1104,22 +1110,23 @@ accessors: ==url==, ==title== and ==captcha==.
 
 [[[
 WARedditLinkEditor >> renderContentOn: html
-	html form: [
-		html paragraph: 'Please enter a URL and title for the link that you want to add:'.
-		html textInput size: 48; title: 'The URL of the new link'; on: #url of: self.
-		html textInput size: 48; title: 'The title of the new link'; on: #title of: self.
-		html render: self captcha.
-		html submitButton on: #cancel of: self.
-		html submitButton on: #save of: self ]
+    html form: [
+        html paragraph: 'Please enter a URL and title for the link that you want to add:'.
+        html textInput size: 48; title: 'The URL of the new link'; on: #url of: self.
+        html textInput size: 48; title: 'The title of the new link'; on: #title of: self.
+        html render: self captcha.
+        html submitButton on: #cancel of: self.
+        html submitButton on: #save of: self ]
 ]]]
 
 
 [[[
 WARedditLinkEditor >> initialize
-	super initialize.
-	self url: 'http://';
-		title: 'title';
-		captcha: WARedditCaptcha new
+    super initialize.
+    self 
+         url: 'http://';
+         title: 'title';
+         captcha: WARedditCaptcha new
 ]]]
 
 
@@ -1129,43 +1136,43 @@ as a subclass of ==WAComponent==
 
 [[[
 WARedditLinkEditor >> children
-	^ Array with: self captcha
+    ^ Array with: self captcha
 ]]]
 
 
 [[[
 WARedditLinkEditor >> updateRoot: anHtmlRoot
-	super updateRoot: anHtmlRoot.
-	anHtmlRoot title: 'Reddit.st - Submit a new link'.
-	anHtmlRoot stylesheet url: (RedditFileLibrary urlOf: #mainCss)
+    super updateRoot: anHtmlRoot.
+    anHtmlRoot title: 'Reddit.st - Submit a new link'.
+    anHtmlRoot stylesheet url: (RedditFileLibrary urlOf: #mainCss)
 ]]]
 
 
 [[[
 WARedditLinkEditor >> cancel
-	self answer: false
+    self answer: false
 ]]]
 
 
 [[[
 WARedditLinkEditor >> save
-	self isUrlMissing ifTrue: [ ^ self inform: 'Please enter an URL' ].
-	self isTitleMissing ifTrue: [ ^ self inform: 'Please enter a title' ].
-	self captcha isSolved ifFalse: [ ^ self inform: 'Please answer the correct sum using digits' ].
-	self isUrlValid ifFalse: [ ^ self inform: 'The URL you entered did not resolve' ].
-	self answer: true
+    self isUrlMissing ifTrue: [ ^ self inform: 'Please enter an URL' ].
+    self isTitleMissing ifTrue: [ ^ self inform: 'Please enter a title' ].
+    self captcha isSolved ifFalse: [ ^ self inform: 'Please answer the correct sum using digits' ].
+    self isUrlValid ifFalse: [ ^ self inform: 'The URL you entered did not resolve' ].
+    self answer: true
 ]]]
 
 
 [[[
 WARedditLinkEditor >> isTitleMissing
-	^ self title isNil or: [ self title isEmpty or: [ self title = 'title' ] ]
+    ^ self title isNil or: [ self title isEmpty or: [ self title = 'title' ] ]
 ]]]
 
 
 [[[
 WARedditLinkEditor >> isUrlMissing
-	^ self url isNil or: [ self url isEmpty or: [ self url = 'http://' ] ]
+    ^ self url isNil or: [ self url isEmpty or: [ self url = 'http://' ] ]
 ]]]
 
 
@@ -1177,7 +1184,7 @@ WARedditLinkEditor >> isUrlValid
 
 [[[
 WARedditLinkEditor >> createLink
-	^ RedditLink withUrl: self url title: self title
+    ^ RedditLink withUrl: self url title: self title
 ]]]
 
 
@@ -1204,26 +1211,26 @@ logic. The class ==WARedditCaptcha== is again a subclass of
 
 [[[
 WARedditCaptcha >> renderContentOn: html
-	self x: 10 atRandom.
-	self y: 10 atRandom.
-	html paragraph: 'CAPTCHA: How much is ',
-		self x asWords, ' plus ', self y asWords, ' ?'.
-	html textInput
-		title: 'This functions as a CAPTCHA, type the answer using digits';
-		on: #sum of: self
+    self x: 10 atRandom.
+    self y: 10 atRandom.
+    html paragraph: 'CAPTCHA: How much is ',
+        self x asWords, ' plus ', self y asWords, ' ?'.
+    html textInput
+        title: 'This functions as a CAPTCHA, type the answer using digits';
+	on: #sum of: self
 ]]]
 
 
 [[[
 WARedditCaptcha >> initialize
-	super initialize.
-	self x: 0; y: 0; sum: 0
+    super initialize.
+    self x: 0; y: 0; sum: 0
 ]]]
 
 
 [[[
 WARedditCaptcha >> isSolved
-	^ self sum asInteger = (self x + self y)
+    ^ self sum asInteger = (self x + self y)
 ]]]
 
 
@@ -1267,9 +1274,9 @@ take a while to load and compile.
 
 [[[
 Gofer it
-  smalltalkhubUser: 'SvenVanCaekenberghe' project: 'Reddit';
-  configuration;
-  loadStable.
+    smalltalkhubUser: 'SvenVanCaekenberghe' project: 'Reddit';
+    configuration;
+    loadStable.
 ]]]
 
 
