@@ -13,7 +13,7 @@
 
     "version": {
         "name": "latest",
-        "desc": "Latest build result"
+        "desc": "Latest successful build"
     },
 
     "files": [
