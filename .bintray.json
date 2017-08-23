@@ -1,0 +1,23 @@
+{
+    "package": {
+        "name": "booklet-reddit",
+        "repo": "wip",
+        "subject": "squarebracketassociates",
+        "desc": "Implementing Reddit.st in 10 elegant classes",
+        "licenses": ["MIT"],
+        "website_url": "https://github.com/SquareBracketAssociates/Booklet-Reddit",
+        "issue_tracker_url": "https://github.com/SquareBracketAssociates/Booklet-Reddit/issues",
+        "vcs_url": "https://github.com/SquareBracketAssociates/Booklet-Reddit.git",
+        "labels": ["work-in-progress"]
+    },
+
+    "version": {
+        "name": "latest",
+        "desc": "Latest build result"
+    },
+
+    "files": [
+        {"includePattern": "build/(reddit).pdf", "uploadPattern": "$1-wip.pdf"}
+    ],
+    "publish": true
+}
