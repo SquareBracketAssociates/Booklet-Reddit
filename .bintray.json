@@ -18,7 +18,7 @@
 
     "files": [
         {
-            "includePattern": "build/(reddit).pdf",
+            "includePattern": "build/(reddit).spiral.pdf",
             "uploadPattern": "$1-wip.pdf",
             "matrixParams": { "override": 1 }
         }
