@@ -1,7 +1,5 @@
 .DEFAULT_GOAL = help
 
-CHAPTERS = \
-	Chapters/Reddit/Reddit
 
 # Redirect to bootstrap makefile if pillar is not found
 PILLAR ?= $(wildcard pillar)
